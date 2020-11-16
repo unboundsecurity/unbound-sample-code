@@ -1,4 +1,8 @@
-# unbound-sdk
-The Unboundtech security platform provides a variety of API's that covers a wide range of use cases.
+# Unbound Tech Software development kit 
+This repo provides code samples showing how to programatically use Unbound Tech Security Platform for common crypto use cases.
+
+The samples in this repo include:
+* Encrypt / Decrypt arbitrary data
+* Using Tokenization with FPE
 
 
