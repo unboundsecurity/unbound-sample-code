@@ -1,0 +1,2 @@
+* Delete repo: https://github.com/unbound-tech/ub_sde_sample (moved to tokenization/java)
+* Delete repo: https://github.com/unbound-tech/unbound-windows-code-signing-demo (moved to code-signing/windows-office)
