@@ -1,0 +1,31 @@
+{
+  "name": "casp-erc20-js-demo",
+  "version": "1.0.0",
+  "description": "Demonstrates how to use Unbound-tech CASP for deploying and interacting with a custom Ethereum ERC20 token contract",
+  "main": "casp-cli.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "asn1js": "^2.0.26",
+    "bluebird": "^3.5.5",
+    "boxen": "^4.1.0",
+    "cli-spinner": "^0.2.10",
+    "del": "^5.1.0",
+    "ethereumjs-tx": "^2.1.1",
+    "ethereumjs-util": "^6.1.0",
+    "figlet": "^1.2.4",
+    "inquirer": "^7.0.0",
+    "md5-file": "^4.0.0",
+    "solc": "^0.5.11",
+    "superagent": "^5.1.0",
+    "superagent-defaults": "^0.1.14",
+    "superagent-jsonapify": "^1.4.5",
+    "superdebug": "^2.2.0",
+    "web3": "^1.2.1",
+    "word-wrap": "^1.2.3",
+    "yargs": "^14.0.0"
+  }
+}

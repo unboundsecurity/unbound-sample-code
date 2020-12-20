@@ -1,0 +1,707 @@
+#!/usr/bin/env node
+const Promise = require('bluebird');
+const CaspClient = require('./src/casp-client');
+const CaspEth = require('./src/eth-util');
+const erc20Compile = require('./src/erc20-compiler');
+const fs = require('fs');
+const path = require('path');
+const readline = require('readline');
+const inquirer = require('inquirer');
+const boxen = require('boxen');
+const messages = require('./messages');
+const del = require('del');
+
+const configPath = path.join(__dirname, 'config.json');
+const CONTRACT_SRC_FOLDER = path.join(__dirname, "contracts");
+const CONTRACT_OUT_FOLDER = path.join(__dirname, "build");
+
+const CliApp = require('./src/cli-app');
+
+/**
+ * Load compiled contract data
+ *
+ * @param  {type} contractSrcFileName the contract source file name
+ */
+function loadContractData(contractSrcFileName) {
+  var pathComponents = path.parse(contractSrcFileName);
+  var contractName = pathComponents.name;
+  var jsonOutputFile = path.join(CONTRACT_OUT_FOLDER, contractName + ".json");
+  var json = JSON.parse(fs.readFileSync(jsonOutputFile, 'utf8'));
+  var contractData = json.contracts[contractSrcFileName][contractName];
+  return {
+    abi: contractData.abi,
+    bytecode: contractData.evm.bytecode.object
+  }
+}
+
+class CaspCli extends CliApp  {
+
+  constructor() {
+    super();
+    this.config = this.loadConfig();
+    this.casp = new CaspClient(this.config);
+    this.caspEth = new CaspEth(this.casp);
+  }
+
+  /**
+   * Loads and validates config from ./config.json
+   */
+  loadConfig() {
+    var config;
+
+    var exit = (msg) => {
+      this.log(msg);
+      process.exit(0);
+    }
+
+    if(!fs.existsSync(configPath)) {
+      exit(`Can't file config file at ${configPath}`);
+    }
+    try {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    } catch(e) {
+      this.log(e);
+      exit(`Invalid config file: ${configPath}`)
+      process.exit(0);
+    }
+
+    var vaults = config.vaults || [];
+    if(!vaults.length) {
+      exit("No vaults in config file");
+    }
+    if(vaults.length > 2) {
+      exit("Maximum of 2 vaults is allowed in config.")
+    }
+    if(!vaults[0].contractSource) {
+      exit("Please specify contractSource for first vault in config and copy your contract source file to /contracts");
+    }
+    return config;
+  }
+
+  async findOrCreateVault(vaultData) {
+    var vaultName = vaultData.name;
+    var casp = this.casp;
+    var vault = await casp.findVaultByName(vaultName);
+    if(!vault) {
+      if(vaultData.contractSource) {
+        this.log(messages.FIRST_VAULT_CONTRACT);
+      } else {
+        this.log(messages.EXCHANGE_VAULT);
+      }
+      await this.clickAnyKeyToContinue();
+
+      var payload = casp.getNewVaultPayload(vaultData);
+
+      vault = await this.runWithSpinner(casp.createVault(payload),
+        `Creating vault '${vaultName}'`);
+      this.log(`>> Vault '${vaultName}' created successfully.`)
+    } else {
+      this.log(`>> Found vault '${vaultName}'`);
+    }
+    return vault;
+  }
+
+  /**
+   *  Waits until CASP operation is approved by quorum
+   */
+  async waitForOp(op, nomsg) {
+    if(!nomsg) {
+      this.log((op && op.description) || 'N/A');
+    }
+    if(op.status !== 'PENDING') {
+      if(nomsg) {
+        readline.clearLine(process.stdout, 0);
+        readline.cursorTo(process.stdout, 0);
+      }
+      this.log(">> CASP signature Approved!                                               ");
+      return op;
+    }
+
+    var pendingMemberNames = [].concat.apply(...op.groups.map(g =>
+      g.members.filter(m => !m.isApproved)
+        .map(m => m.label)));
+    var msg = `Pending approval: ${pendingMemberNames.join(", ")}`
+    await this.waitWithMessage(msg, nomsg);
+    return this.waitForOp(await this.casp.getOperation(op), true);
+  }
+
+
+  /**
+   * Execute and sign an Ethereum transaction with CASP,
+   * sends it to the Eth network and waits for receipt.
+   */
+  async executeTx(rawTx, vault, description) {
+    let signOp = await this.caspEth.createSignOperation(rawTx, vault, description);
+    await this.waitForOp(signOp);
+    signOp = await this.casp.getSignOperation(signOp);
+    var signedTx = this.caspEth.getSignedTransactionFromCaspOp(signOp);
+    var serializedTx = '0x' + signedTx.serialize().toString('hex');
+    var txHash = '0x' + signedTx.hash().toString('hex');
+    this.log(`>> Transaction sent to network. You can see the transaction details at:`);
+    this.log(`>> https://ropsten.etherscan.io/tx/${txHash}`);
+    var receipt = await this.runWithSpinner(this.caspEth.sendSignedTransaction(serializedTx),
+      "Waiting for receipt");
+    if(!(receipt && receipt.status)) {
+      this.log('Transaction failed: ');
+      this.log(receipt);
+    } else {
+      this.log(`>> Transaction completed successfully!`)
+    }
+    return receipt;
+  }
+
+
+  /**
+   * Waits until Eth balance for an address is positive
+   */
+  async waitForEth(address) {
+    var balance = await this.waitUntil(() => this.caspEth.getBalanceEth(address),
+      `Waiting for Eth deposit to address ${address}`)
+    this.log(`>> Great! We got ${balance} Eth !`);
+    return balance;
+  }
+
+  /**
+   * Saves vault config to config.json by vault name.
+   * Used for saving data such as generated address, balance etc.
+   * Use as data storage for the conveince of the demo
+   */
+  async saveVaultConfig(vaultConfig) {
+    var config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    var vaultIndex = config.vaults.findIndex(v => v.name === vaultConfig.name );
+    if(vaultIndex < 0) throw new Error(`Can't find vault ${vault.name} in config`);
+    config.vaults[vaultIndex] = vaultConfig;
+    fs.writeFileSync(configPath, JSON.stringify(config, undefined, 2));
+  }
+
+
+  /**
+   * Prints current total-supply and remaining tokens for a contract
+   */
+  async logSupply(contractData, vault) {
+    var info = await this.runWithSpinner(this.caspEth.getContractInfo(contractData),
+      "Updating token supply");
+    Object.assign(contractData, {info});
+    var amount = contractData.info.totalSupply / Math.pow(10, contractData.info.decimals);
+    var titleTotalSupply = "Token total supply is:";
+    var message = `${titleTotalSupply} ${amount} ${contractData.info.symbol}`;
+    var address = vault && vault.address;
+
+    if(address) {
+      var remaining = await this.runWithSpinner(this.caspEth.getBalanceErc(address, contractData)
+        ,`Fetching ${contractData.info.name} remaining tokens`);
+      var titleRemaining = 'Remaining Tokens:';
+      contractData.remaining = remaining;
+      message = message + `\n${titleRemaining.padEnd(titleTotalSupply.length)} ${remaining} ${contractData.info.symbol}`;
+    }
+
+    this.log(boxen(message));
+  }
+
+
+  /**
+   * Prints the balance for a vault address.
+   * It will print Eth balance and if a contract is available it will also print
+   * the token balance for that contract.
+   */
+  async logBalance(vault, contractData) {
+    var address = vault.address;
+    if(!address) return;
+    var balanceEth = await this.runWithSpinner(this.caspEth.getBalanceEth(address),
+      "Fetching Eth balance");
+    var str = `Eth balance is: ${balanceEth}`;
+    if(contractData) {
+      balanceErc = await this.runWithSpinner(this.caspEth.getBalanceErc(address, contractData),
+        "Fetching ERC20 balance");
+      str += `\nERC20 balance is: ${balanceEth} ${contractData.info.symbol}`;
+    }
+
+    this.log(boxen(str));
+  }
+
+
+  /**
+   * Compiles an ERC20 contract`
+   */
+  async compileContract(contractSource) {
+    await this.writeTitle("Compile");
+    try {
+      var contractData = loadContractData(contractSource);
+      this.log(messages.CONTRACT_ALREADY_COMPILED(contractSource));
+      return contractData;
+    } catch {}
+
+    var src = path.join(CONTRACT_SRC_FOLDER, contractSource);
+    this.log(messages.BEFORE_COMPILE(contractSource));
+    await this.clickAnyKeyToContinue(`Click any key to start compilation`);
+    this.log(`Compiling contract ${src}`);
+    erc20Compile(src, {
+      outputFolderPath: CONTRACT_OUT_FOLDER
+    });
+    this.log('>> Contract compiled successfully!');
+    return loadContractData(contractSource);
+  }
+
+  /**
+   * Deploys an ERC20 contract to the Eth network.
+   * Transaction is signed with CASP
+   */
+  async deployContract(contractSource, vault) {
+    await this.writeTitle("Deploy");
+    var contractData = loadContractData(contractSource);
+    await this.clickAnyKeyToContinue(messages.READY_TO_DEPLOY);
+    let rawTx = await this.caspEth.getContractDeployTx(contractData, vault);
+    let receipt = await this.executeTx(rawTx, vault, `Deploying contract ${contractSource}`)
+    if(receipt.status) {
+      return receipt.contractAddress;
+    }
+  }
+
+  /**
+   * Mint ERC20 tokens
+   */
+  async mint(contractData, vaultOptions) {
+    await this.writeTitle("Mint");
+    let answers = await inquirer.prompt([
+      {
+        type: "number",
+        name: "tokens",
+        message: "How many tokens to mint ?",
+        default: 1000,
+        validate: (val, asn) => {
+          if(isNaN(val)) {
+            return 'Please enter a number';
+          };
+          if(val < 10 || val > 10000) {
+            return "Must be between 10 - 10000"
+          }
+          return true;
+        }
+      }
+    ])
+    var amountToMint = answers.tokens;
+    var mintTx = await this.caspEth.getMintTx(contractData, amountToMint, vaultOptions);
+    let receipt = await this.executeTx(mintTx, vaultOptions,
+      `Mint ${amountToMint} ${contractData.info.symbol} tokens to ${contractData.info.name} ${contractData.contractAddress}`);
+    if(receipt.status) {
+      await this.logSupply(contractData, vaultOptions);
+      return amountToMint;
+    }
+  }
+
+  /**
+   * Burn ERC20 tokens
+   */
+  async burn(contractData, vaultOptions) {
+    await this.writeTitle("Burn");
+    let answers = await inquirer.prompt([
+      {
+        type: "number",
+        name: "tokens",
+        message: "How many tokens to burn ?",
+        default: 100,
+        validate: (val, asn) => {
+          if(isNaN(val)) {
+            return 'Please enter a number';
+          };
+          if(val < 10 || val > 100) {
+            return "Must be between 10 - 100"
+          }
+          return true;
+        }
+      }
+    ])
+    var amountToBurn = answers.tokens;
+    var burnTx = await this.caspEth.getBurnTx(contractData, amountToBurn, vaultOptions);
+    let receipt = await this.executeTx(burnTx, vaultOptions,
+      `Burn ${amountToBurn} ${contractData.info.symbol} tokens from ${contractData.info.name} ${contractData.contractAddress}`);
+    if(receipt.status) {
+      await this.logSupply(contractData, vaultOptions);
+      return amountToBurn;
+    }
+  }
+
+  /**
+   * Transfer ERC20 tokens from contract to another address
+   */
+  async transfer(contractData, vaultOptions, toVault, hideTitle) {
+    if(!hideTitle) await this.writeTitle("Transfer");
+    let maxTokens = contractData.remaining;
+    let answers = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "doTranfer",
+        message: "Would you like to transfer tokens to an external address ?",
+        default: true,
+        when: !toVault
+      },
+      {
+        type: "input",
+        name: "toAddress",
+        message: "To which Ethereum Ropsten address would you like to transfer tokens ?",
+        validate: (address) => {
+          if (!this.caspEth.isValidAddress(address)) {
+            return "Invalid Ethereum address"
+          }
+          return true;
+        },
+        when: answers => answers.doTranfer && !toVault
+      },
+      {
+        type: "number",
+        name: "tokens",
+        message: "How many tokens to transfer ?",
+        default: maxTokens,
+        validate: (val) => {
+          if(isNaN(val)) return 'Please enter a number';
+          if(val < 1 || val > maxTokens) {
+            return `Must be between 1 - ${maxTokens}`
+          }
+          return true;
+        },
+        when: answers => answers.doTranfer || toVault
+      }
+    ])
+
+    if(!(answers.doTranfer || toVault)) return undefined;
+    var amountToTransfer = answers.tokens;
+    var toAddress = answers.toAddress || toVault.address;
+    var transferTx = await this.caspEth.getTransferTx(contractData,
+     vaultOptions, toAddress, amountToTransfer);
+    let receipt = await this.executeTx(transferTx, {...vaultOptions, includeRawTx: true},
+      `Transferring ${amountToTransfer} ${contractData.info.symbol} to ${toAddress}`);
+    if(receipt.status) {
+      await this.logSupply(contractData, vaultOptions);
+      return amountToTransfer;
+    }
+  }
+
+  /**
+   * Run the interactive CASP ERC20 Demo
+   */
+  async start(argv) {
+    console.clear();
+    var config = this.config;
+    var casp = this.casp = this.casp || new Casp(config);
+    var caspEth = this.caspEth;
+    await this.writeTitle("Welcome", true);
+    this.log(messages.WELCOME);
+    await this.clickAnyKeyToContinue();
+    var contractVault;
+    var contractData1;
+    try {
+      await casp.init();
+      await Promise.map(config.vaults, async(vaultData) => {
+        var vaultName = vaultData.name;
+        // contract compilation
+        var contractSource = vaultData.contractSource;
+        var contractData = contractSource && await this.compileContract(contractSource);
+        contractData1 = contractData1 || contractData;
+        // Vault creation
+
+        if(contractSource) {
+          await this.writeTitle("Generate key");
+        } else {
+          await this.writeTitle("Exchange vault");
+        }
+
+        // When the vault is created, CASP initiates a ‘join vault’ operation and waits until all vault members have pulled
+        // their key share. Only when all members have successfully pulled the share, the Vault is ready and its public key
+        // that is used for Eth address, can be retrieved.
+        // The follwing code creates the vault, finds the join operation and then waits until this operation is approved
+        // which means that all members have pulled the share.
+        // The operation contains the info about which member is still pending.
+        // If the specific member status is not required, its also possible to continously fetch the vault object (instead of
+        // the join operation) and wait until its status is "INITIALIZED"
+        var vault = await this.findOrCreateVault(vaultData);
+        if(!vault.isActive) {
+          this.log(`Vault '${vault.name}' is not active yet: ${vault.statusText}`);
+          var pendingOp = await casp.getPendingJoinOp(vault);
+          await this.waitForOp(pendingOp);
+        }
+
+        // Create address
+        if(!vaultData.address) {
+          var addressData = await this.caspEth.getAddressData(vault);
+          vaultData = {...vaultData, ...addressData};
+          this.saveVaultConfig(vaultData);
+        }
+        this.log(`>> Vault address is: ${vaultData.address}`);
+        await this.logBalance(vaultData);
+        var vaultOptions = {...vaultData, ...vault};
+
+
+        var eth = await this.caspEth.getBalanceEth(vaultData.address);
+        if(!eth) {
+          await this.writeTitle("Deposit");
+          if(contractSource) {
+            this.log(messages.NEED_ETH)
+          }
+          await this.waitForEth(vaultData.address);
+        }
+
+        // Deploy contract
+        if(contractSource && !vaultData.contractAddress) {
+          vaultData.contractAddress = vaultData.contractAddress ||
+            await this.deployContract(contractSource, vaultOptions)
+          // save contract address
+          this.saveVaultConfig(Object.assign(vaultData, {contractAddress: vaultData.contractAddress}));
+        }
+
+        if(vaultData.contractAddress) {
+          contractVault = vaultOptions;
+          this.log(`>> Your contract address is: ${vaultData.contractAddress}`);
+          contractData.contractAddress = vaultData.contractAddress;
+          await this.logSupply(contractData, vaultOptions);
+
+          // mint
+          if(!vaultData.minted) {
+            var minted = await this.mint(contractData, vaultOptions);
+            this.saveVaultConfig(Object.assign(vaultData, {minted: minted }));
+          }
+
+          // burn
+          if(!vaultData.burned) {
+            var burned = await this.burn(contractData, vaultOptions);
+            this.saveVaultConfig(Object.assign(vaultData, {burned: burned }));
+          }
+
+          // transfer
+          var transferred = await this.transfer(contractData, vaultOptions);
+        } else {
+          this.log(messages.TRANSFER_TO_EXCHANGE);
+          var transferred = await this.transfer(contractData1, contractVault, vaultOptions, true);
+        }
+      }, {concurrency: 1})
+      await this.showInfo('Summary');
+      await this.clickAnyKeyToContinue();
+      await this.writeTitle('The end');
+      this.log(messages.GOODBYE);
+    } catch(e) {
+      this.logError(e);
+    }
+  }
+
+  /**
+   * Fetch all relevant inforation about existing vaults
+   * This includes balance, address and contract data
+   */
+  async getInfo() {
+    var casp = this.casp;
+    var config = this.loadConfig();
+    var vaults = config.vaults;
+    var contractData;
+    vaults = await this.runWithSpinner(Promise.map(vaults, async(vaultData) => {
+      try {
+        var vault = await casp.findVaultByName(vaultData.name);
+        if(!vault) return {...vaultData, error: "Not found - run setup"};
+
+        if(vaultData.contractSource) {
+          try {
+            contractData = loadContractData(vaultData.contractSource);
+          } catch(e) {}
+          if(contractData) {
+            contractData.contractAddress = vaultData.contractAddress;
+            if(contractData.contractAddress) {
+              contractData.info = await this.caspEth.getContractInfo(contractData);
+            }
+          }
+        }
+        vault.key = vault.publicKeyDer = await casp.getVaultDefaultKey(vault);
+        vault.address = this.caspEth.toEthAddress(vault.key);
+        vault.balanceEth = await this.caspEth.getBalanceEth(vault.address);
+        vault.contractAddress = vaultData.contractAddress;
+        if(vault.address && contractData) {
+          vault.balanceContract = await this.caspEth.getBalanceErc(vault.address, contractData);
+        }
+        return vault;
+      } catch(e) {
+        console.log(e);
+        return {
+          ...vaultData,
+          error: e
+        }
+      }
+    }, {concurrency: 1}), "Fetching info");
+    return {vaults, contractData};
+  }
+
+  /**
+   * Shows summary of information for vaults address balance and ERC20 contract
+   */
+  async showInfo(title) {
+    await this.writeTitle(title || 'Info');
+    var width = process.stdout.columns;
+    width = Math.min(width, 80);
+    var info = await this.getInfo();
+    var contractData = info.contractData;
+    info.vaults.forEach(vault => {
+      var lines = [`Vault: ${vault.name}`.padEnd(width)];
+      lines.push(new Array(width).join("-"));
+      var writeAttr = (name, value) => {
+        if(value === undefined) value = 'N/A';
+        lines.push(`${name}:`.padEnd(15) + " " + value);
+      }
+      writeAttr("Address", vault.address);
+      writeAttr("Balance Eth", vault.balanceEth);
+      if(contractData && contractData.info) {
+        writeAttr(`Balance ${contractData.info.symbol}`, vault.balanceContract);
+      }
+      if(vault.contractAddress && contractData) {
+        lines.push('')
+        lines.push('Contract info');
+        lines.push(new Array(width).join("-"));
+        writeAttr("Address", contractData.contractAddress);
+        writeAttr("Name", contractData.info.name);
+        writeAttr("Symbol", contractData.info.symbol);
+        writeAttr("Decimals", contractData.info.decimals);
+        writeAttr("Total supply", contractData.info.totalSupply / Math.pow(10, contractData.info.decimals));
+        // writeAttr("Remaining", "50");
+      }
+
+      console.log(boxen(lines.join("\n"), {padding: 1, margin: {left: 2}, align: 'left'}));
+    })
+  }
+
+  /**
+   * Prompts the user for a withdrawal from an existing vault to external addresses
+   * Withdrawal supports both Eth and ERC20 token if available
+   */
+  async transferFrom() {
+    try {
+      await this.writeTitle('Withdrawal');
+      var info = await this.getInfo();
+      var vaultsWithAddress = info.vaults.filter(v => v.address);
+      if(!vaultsWithAddress.length) {
+        this.log("No vaults with address are available");
+        this.log("Please run ./casp start");
+        process.exit(0);
+      }
+      var contract = info.contractData;
+      var answers = await inquirer.prompt([
+        {
+          type: "list",
+          name: "fromVault",
+          choices: vaultsWithAddress.map(v => ({name: v.name, value: v, short: v.name})),
+          message: "Select vault to withdraw from"
+        },
+        {
+          type: "input",
+          name: "toAddress",
+          message: "To which address funds should be transferred",
+          validate: (address) => {
+            if (!this.caspEth.isValidAddress(address)) {
+              return "Invalid Ethereum address"
+            }
+            return true;
+          }
+        },
+        {
+          type: "list",
+          name: "asset",
+          choices: (answers) => {
+            var assets = [{value: "Eth", name: `Eth (Balance: ${answers.fromVault.balanceEth})`}];
+            if(contract && contract.info) {
+              assets.push({value: contract.info.symbol, name: `${contract.info.symbol} (Balance: ${answers.fromVault.balanceContract})` });
+            }
+            return assets;
+          },
+          message: "Asset to withdraw"
+        },
+        {
+          type: "number",
+          name: "amount",
+          message: "Amount",
+          validate: (input, answers) => {
+            var max = answers.asset === 'Eth' ? answers.fromVault.balanceEth : answers.fromVault.balanceContract;
+            if(input > max) return `Maximum ${max}`;
+            return true;
+          }
+        }
+      ]);
+      var fromVault = answers.fromVault;
+      var tx;
+      if(answers.asset === 'Eth') {
+        tx = await this.caspEth.getEthTransaction(
+          answers.toAddress,
+          answers.amount,
+          fromVault
+        )
+      } else {
+        tx = await this.caspEth.getTransferTx(contract, fromVault, answers.toAddress, answers.amount);
+      }
+
+      await this.executeTx(tx, {...fromVault, includeRawTx: true},
+          `Withdraw ${answers.amount} ${answers.asset} to ${answers.toAddress}`);
+    } catch(e) {
+      this.logError(e);
+    }
+  }
+
+  /**
+   * Delete compiled contract and cleans the config file from any data
+   * Renames vaults in config files in order for the next demo to create
+   * them and not use the old vaults. This is done since its not possible to
+   * easily delete vaults in CASP
+   */
+  async reset() {
+    await this.writeTitle("Reset", true);
+    this.log(messages.RESET_WARNING);
+    this.log();
+    var configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    var answers = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "confirm",
+        message: "Continue with reset?",
+        default: false
+      },
+      {
+        type: "list",
+        name: "account",
+        message: "Select CASP account to use",
+        when: answers => answers.confirm,
+        default: configData && configData.activeAccount,
+        choices: () =>  this.casp.listAccounts()
+              .then(accounts => accounts.map(a => ({name: a.name, value: a})))
+
+      }
+    ]);
+    if(!answers.confirm) return;
+    this.log(`Deleting folder ${CONTRACT_OUT_FOLDER}`)
+    del.sync([CONTRACT_OUT_FOLDER]);
+
+    configData.activeAccount = answers.account;
+    configData.vaults.forEach(vault => {
+      ['publicKeyDer', 'address', 'contractAddress', 'minted', 'burned', 'balanceEth', 'balanceErc']
+        .forEach(attr => delete vault[attr]);
+      var i = parseInt(vault.name.substr(-3));
+      if(!isNaN(i)) {
+        vault.name = vault.name.slice(0,-3);
+        vault.name = vault.name.trim();
+      }
+      i = i || 0;
+      i++;
+      vault.name = `${vault.name} ${i.toString().padStart(3,"0")}`;
+    })
+    fs.writeFileSync(configPath, JSON.stringify(configData, undefined, 2));
+
+  }
+}
+
+var caspCli = new CaspCli();
+
+var argv = require('yargs')
+    .usage('Usage: node $0 <command>')
+    .command('start', 'Start ERC20 demo', {}, async argv => await caspCli.start())
+    .command('reset', 'Reset the demo, delete previous data', {}, argv => caspCli.reset())
+    .command('withdraw', 'Withdraw Eth or tokens for a vault', {},
+      argv => caspCli.transferFrom())
+    .command('info', 'Show info for active vault addresses, balance and contract', {}, argv => {
+      caspCli.showInfo();
+    })
+    .demandCommand()
+    .strict()
+    .help('h')
+    .alias('h', 'help')
+    .argv;
