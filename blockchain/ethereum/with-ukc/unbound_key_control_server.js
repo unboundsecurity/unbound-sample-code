@@ -1,12 +1,5 @@
 const axios = require('axios');
 
-// pass = 'Unbound1!'
-// partition = 'casp'
-// user = 'user'
-// host = 'https://localhost:8443/api/v1'
-// path = host + '/keys/' + keyId + '/public';
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
-
 class _ApiClient {
     basePath = ''
     authentications = { basicAuth: {} }
@@ -33,8 +26,6 @@ class KeysApi {
     async getPublicKeyData(keyId) {
         try {
             const response = await this.ukcCient.get('/keys/' + keyId + '/public');
-            // const response = await ukcCient.post(path, { headers: { 'Content-Type': 'application/json', 'Authorization': 'Basic' + Buffer.from(user + "@" + partition + ":" + pass).toString("base64") } });
-            // console.log(response.data);
             return response.data
         } catch (error) {
             console.error(error);

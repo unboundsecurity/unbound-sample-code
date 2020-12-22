@@ -116,7 +116,7 @@ function createTransaction(web3, nonce, gasPrice, gasLimit, chainId) {
 	console.log('transaction:');
 	console.log(rawTransaction);
 
-	const Tx = require('ethereumjs-tx');
+	const Tx = require('ethereumjs-tx').Transaction;
 	return new Tx(rawTransaction);
 }
 
@@ -128,8 +128,7 @@ async function signTransaction(from, tx, chainId, useEkm) {
 	if (useEkm) await ekmSign(from, tx, chainId);
 	else localSign(tx)
 
-
-	// validates that the signature is corresponds to the given source
+	// validates that the signature corresponds to the given source
 	if (Buffer.from(tx.getSenderAddress()).toString('hex') != from) {
 		throw "Wrong Sender address";
 	}
