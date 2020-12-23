@@ -6,16 +6,14 @@ The samples in this repo include:
     - Bitcoin
     - Ethereum
 1. **Certificates** - Examples of the certificate creation process
-    - PKCS11
-    - Java
 1. **Code Signing** - sign files
     - Windows Office - sign various types of Microsoft Windows files
 1. **Cryptographic operations** - the basic building blocks to implement cryptosystems
 
-    2. Derivation - Derive secondary key from PKCS11
-    2. Encryption - encryption and decryption of data
-    2. Signing - data signing and signature verification
-    2. Wrapping - save key material while securing it by another key
+    - Derivation - Derive secondary key from PKCS11
+    - Encryption - encryption and decryption of data
+    - Signing - data signing and signature verification
+    - Wrapping - save key material while securing it by another key
 1. **Key Management** - the cryptographic key lifecycle, including generation, import/export and rotation
 1. **Passwords** - demonstrate safe password storage and verification
 1. **Tokenization** - tokenizing data with format preserving encryption
