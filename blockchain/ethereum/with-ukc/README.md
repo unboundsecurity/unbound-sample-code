@@ -15,8 +15,8 @@ This demo does the following:
 ## Usage
 ### Requirements
 * A running UKC server 
-* A partition with an ECC-SECP_256K_1 key
-* An Infura endpoint URL (get it from [here](https://infura.io))
+* A partition with an ECC-SECP_256K_1 key. See instructions [here](https://www.unboundtech.com/docs/UKC/UKC_User_Guide/HTML/Content/Products/UKC-EKM/UKC_User_Guide/UI/SO_UI/KeyTab.html#h3_2)
+* An Infura endpoint URL. Get it from [here](https://infura.io)
 * NodeJS LTS
 
 ### Installation and configuration
