@@ -6,9 +6,9 @@
   "dependencies": {
     "asn1": "^0.2.4",
     "axios": "^0.21.1",
+    "ec-key": "0.0.4",
     "ethereumjs-tx": "^2.1.2",
     "ethereumjs-util": "^7.0.7",
-    "tder": "0.0.8",
     "web3": "^1.3.1"
   },
   "devDependencies": {},
