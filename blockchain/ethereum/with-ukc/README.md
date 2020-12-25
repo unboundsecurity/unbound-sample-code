@@ -14,8 +14,9 @@ This demo does the following:
 
 ## Usage
 ### Requirements
-* A UKC server with EC key for signing
-* An Infura Token (get it from [here](https://infura.io))
+* A running UKC server 
+* A partition with an ECC-SECP_256K_1 key
+* An Infura endpoint URL (get it from [here](https://infura.io))
 * NodeJS LTS
 
 ### Installation and configuration
@@ -28,5 +29,5 @@ This demo does the following:
 	
 ### Running the demo
 ```
-$ node ethereum.js
+$ node ukc-test-ethereum.js
 ```
