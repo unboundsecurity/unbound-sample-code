@@ -2,6 +2,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudio,visualstudiocode,intellij,angular,java,maven,xcode,androidstudio,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudio,visualstudiocode,intellij,angular,java,maven,xcode,androidstudio,node
 
+demo.local.js
 ### Angular ###
 ## Angular ##
 # compiled output
