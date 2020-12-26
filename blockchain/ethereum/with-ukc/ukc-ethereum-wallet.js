@@ -15,10 +15,7 @@ const DEFAULT_PASSWORD = 'Unbound1!';
 
 const ethAddressFromPublicKey = (rawKeybuffer) => "0x" + ethUtil.pubToAddress(rawKeybuffer).toString('hex');
 
-const print = (message) => {
-	const ukcErrorData = message.response && message.response.data;
-	console.log(ukcErrorData || message.toString());
-}
+const print = (message) => console.log(message)
 
 module.exports = class UkcEthereumWallet {
 	/**

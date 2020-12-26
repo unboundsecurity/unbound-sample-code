@@ -11,6 +11,7 @@ const UkcEthereumWallet = require('./ukc-ethereum-wallet');
 			amountInEth: "0.0004"
 		})
 	} catch (e) {
-		print(e);
+		const ukcErrorData = e.response && e.response.data;
+		console.log(ukcErrorData || e.toString());
 	}
 })();
