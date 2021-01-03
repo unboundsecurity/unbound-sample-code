@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../dy_pkcs11.h"
+#include "dy_pkcs11.h"
 
 void halt(CK_RV rv)
 {
@@ -20,39 +20,57 @@ int main(int argc, char *argv[])
 	CK_ULONG ckk_aes = CKK_AES;
 
 	rv = C_Initialize(NULL);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
 	rv = C_OpenSession(slot, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL, NULL, &hSession);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
+
+	char password[] = ""; // ------ set your password here -------
+	rv = C_Login(hSession, CKU_USER, CK_CHAR_PTR(password), CK_ULONG(strlen(password)));
+	if (rv != CKR_OK)
+		halt(rv);
 
 	// generate key for advanced password protection
-	CK_OBJECT_HANDLE hKey=0;
+	CK_OBJECT_HANDLE hKey = 0;
 	CK_ULONG dyckk_adv_password = DYCKK_ADV_PASSWORD;
 	const char name[] = "adv_object_name";
-	CK_ATTRIBUTE tKey[] = 	{
-		{CKO_PRIVATE_KEY,  &cko_private_key,    sizeof(CK_ULONG)},
-		{CKA_KEY_TYPE,     &dyckk_adv_password, sizeof(CK_ULONG)},
-		{CKA_TOKEN,        &ckTrue,             sizeof(CK_BBOOL)},
-		{CKA_PRIVATE,      &ckTrue,             sizeof(CK_BBOOL)},
-		{CKA_ID,           (CK_CHAR_PTR)name,   sizeof(name)-1},
+	CK_ATTRIBUTE tKey[] = {
+		{CKO_PRIVATE_KEY, &cko_private_key, sizeof(CK_ULONG)},
+		{CKA_KEY_TYPE, &dyckk_adv_password, sizeof(CK_ULONG)},
+		{CKA_TOKEN, &ckTrue, sizeof(CK_BBOOL)},
+		{CKA_PRIVATE, &ckTrue, sizeof(CK_BBOOL)},
+		{CKA_ID, (CK_CHAR_PTR)name, sizeof(name) - 1},
 	};
-	CK_MECHANISM gen = { DYCKM_PASSWORD_KEY_GEN, 0, 0};
-	rv = C_GenerateKey(hSession, &gen, tKey, sizeof(tKey)/sizeof(CK_ATTRIBUTE), &hKey);
-	if (rv != CKR_OK) halt(rv);
+	CK_MECHANISM gen = {DYCKM_PASSWORD_KEY_GEN, 0, 0};
+	rv = C_GenerateKey(hSession, &gen, tKey, sizeof(tKey) / sizeof(CK_ATTRIBUTE), &hKey);
+	if (rv != CKR_OK)
+		halt(rv);
 
-	CK_BYTE password[] = "test_password";
-	// encrypt password 
-	CK_MECHANISM pwd = { DYCKM_PASSWORD, 0, 0};
+	CK_BYTE plain_password[] = "test_password";
+	// encrypt password
+	CK_MECHANISM pwd = {DYCKM_PASSWORD, 0, 0};
 	CK_ULONG enc_password_size = 0;
 	CK_BYTE enc_password[1024];
-	test_rv(C_EncryptInit(hSession, &pwd, hKey));
-	test_rv(C_Encrypt(hSession, password, sizeof(password), NULL, &enc_password_size)); 
-	test_rv(C_Encrypt(hSession, password, sizeof(password), enc_password, &enc_password_size));
+	rv = C_EncryptInit(hSession, &pwd, hKey);
+	if (rv != CKR_OK)
+		halt(rv);
+	rv = C_Encrypt(hSession, plain_password, sizeof(plain_password), NULL, &enc_password_size);
+	if (rv != CKR_OK)
+		halt(rv);
+	rv = C_Encrypt(hSession, plain_password, sizeof(plain_password), enc_password, &enc_password_size);
+	if (rv != CKR_OK)
+		halt(rv);
 
 	// safly verify the encrypted password
-	test_rv(C_VerifyInit(hSession, &pwd, hKey));
-	test_rv(C_Verify(hSession, password, sizeof(password), enc_password, enc_password_size));
+	rv = C_VerifyInit(hSession, &pwd, hKey);
+	if (rv != CKR_OK)
+		halt(rv);
+	rv = C_Verify(hSession, plain_password, sizeof(plain_password), enc_password, enc_password_size);
+	if (rv != CKR_OK)
+		halt(rv);
 
-	test_rv(C_DestroyObject(hSession, hKey));
+	rv = C_DestroyObject(hSession, hKey);
 
 	C_CloseSession(hSession);
 	C_Finalize(NULL);
