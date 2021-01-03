@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../dy_pkcs11.h"
+#include "dy_pkcs11.h"
 
 void halt(CK_RV rv)
 {
@@ -18,9 +18,16 @@ int main(int argc, char *argv[])
 	CK_BBOOL ckFalse = CK_FALSE;
 
 	rv = C_Initialize(NULL);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
 	rv = C_OpenSession(slot, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL, NULL, &hSession);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
+
+	char password[] = ""; // ------ set your password here -------
+	rv = C_Login(hSession, CKU_USER, CK_CHAR_PTR(password), CK_ULONG(strlen(password)));
+	if (rv != CKR_OK)
+		halt(rv);
 
 	// generate elliptic-curve key pair (curve P-256)
 	unsigned char p256_oid[] = {0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07};
@@ -34,16 +41,19 @@ int main(int argc, char *argv[])
 	};
 	CK_SESSION_HANDLE hCaPrvKey = 0, hCaPubKey;
 	rv = C_GenerateKeyPair(hSession, &genMechEcc, tPubKeyEcc, sizeof(tPubKeyEcc) / sizeof(CK_ATTRIBUTE), tPrvKeyEcc, sizeof(tPrvKeyEcc) / sizeof(CK_ATTRIBUTE), &hCaPubKey, &hCaPrvKey);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
 
 	// Make self-signed certificate
 	// 1. create self-singed certificate DER
 	CK_ULONG ca_cert_der_size = 0;
 	rv = DYC_SelfSignX509(hSession, hCaPrvKey, CKM_SHA256, (CK_CHAR_PTR) "CN=CA", NULL, 0, 365, NULL, &ca_cert_der_size);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
 	CK_BYTE_PTR ca_cert_der = (CK_BYTE_PTR)malloc(ca_cert_der_size);
 	rv = DYC_SelfSignX509(hSession, hCaPrvKey, CKM_SHA256, (CK_CHAR_PTR) "CN=CA", NULL, 0, 365, ca_cert_der, &ca_cert_der_size);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
 	// 2. create the certificate object
 	CK_ULONG cko_certificate = CKO_CERTIFICATE;
 	CK_ULONG ckc_x509 = CKC_X_509;
@@ -72,18 +82,22 @@ int main(int argc, char *argv[])
 	// Create Sertificate Request
 	CK_ULONG csr_size = 0;
 	rv = DYC_CreateX509Request(hSession, hPrvKey, CKM_SHA256, (CK_CHAR_PTR) "CN=test", NULL, &csr_size);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
 	CK_BYTE_PTR csr = (CK_BYTE_PTR)malloc(csr_size);
 	rv = DYC_CreateX509Request(hSession, hPrvKey, CKM_SHA256, (CK_CHAR_PTR) "CN=test", csr, &csr_size);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
 
 	// Sign the Request
 	CK_ULONG cert_der_size = 0;
 	rv = DYC_SignX509(hSession, hPrvKey, ca_cert_der, ca_cert_der_size, CKM_SHA256, csr, csr_size, NULL, 0, 365, NULL, &cert_der_size);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
 	CK_BYTE_PTR cert_der = (CK_BYTE_PTR)malloc(cert_der_size);
 	rv = DYC_SignX509(hSession, hPrvKey, ca_cert_der, ca_cert_der_size, CKM_SHA256, csr, csr_size, NULL, 0, 365, cert_der, &cert_der_size);
-	if (rv != CKR_OK) halt(rv);
+	if (rv != CKR_OK)
+		halt(rv);
 
 	C_CloseSession(hSession);
 	C_Finalize(NULL);
