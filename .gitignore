@@ -823,3 +823,5 @@ ekm/server/src/**/*.bak
 
 testing/**/host*
 mobile/desktop/setup/msi/ekp-client-core64/Product Configuration 1/Release 1/**
+
+a.out
