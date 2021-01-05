@@ -20,7 +20,7 @@ This demo does the following:
     ```
     $ npm install
     ```
-* Configure addresses and credentials in the *properties.file*
+* Set web3ProviderUrl in demo.js
 	
 ### Running the demo
 ```
