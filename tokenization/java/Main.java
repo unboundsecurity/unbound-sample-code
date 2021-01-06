@@ -1,8 +1,10 @@
-
-
 import com.dyadicsec.advapi.SDEKey;
 import com.dyadicsec.advapi.SDESessionKey;
+import com.unbound.provider.UBCryptoProvider;
 
+import java.io.IOException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.UUID;
 
 /**
@@ -15,18 +17,33 @@ import java.util.UUID;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchProviderException, KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
 
-        if (args.length != 2) {
-            System.out.println("Invalid args, should be : <partition>  <key_name>");
+        if (args.length < 2) {
+            System.out.println("Invalid args, should be : <partition>  <key_name>  [user]  [password]");
             System.exit(1);
         }
 
         String partition = args[0];
         String keyName = args[1];
+        String user = "user"; //optional. default is "user"
+        if (args.length > 2) user = args[2];
+        String pwd = null; //optional. default is blank
+        if (args.length > 3) pwd = args[3];
+
+
 
         System.out.println(String.format("Partition : %s", partition));
         System.out.println(String.format("Key Name : %s", keyName));
+        System.out.println(String.format("User : %s", user));
+
+        Provider provider = new UBCryptoProvider();
+        Security.addProvider(provider);
+
+        KeyStore keyStore = KeyStore.getInstance("PKCS11", "UNBOUND");
+
+        String auth = String.format("{\"username\":\"%s\", \"password\":\"%s\"}", user, pwd);
+        keyStore.load(null, auth.toCharArray());
 
         // find key by name and partition
         SDEKey sdeKey = SDEKey.findKey(partition, keyName);
