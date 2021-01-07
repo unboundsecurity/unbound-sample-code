@@ -4,15 +4,18 @@ import java.util.Arrays;
 
 public class AESGCMEncDec
 {
-  public static void run() throws Exception
+  public static void main(String[] args) throws Exception
   {
+    char[] pwd = null;
+    if (args.length > 0) pwd = args[1].toCharArray();
+
     final byte[] plainData = "PLAIN DATA".getBytes("UTF-8");
     int slotId = 0;
     Library.C_Initialize();
 
     // Open PKCS#11 session
     CK_SESSION_HANDLE session = Library.C_OpenSession(slotId, CK.CKF_RW_SESSION | CK.CKF_SERIAL_SESSION);
-    Library.C_Login(session, CK.CKU_USER, Main.password); // optional
+    Library.C_Login(session, CK.CKU_USER,  pwd); // optional
 
     // Generate AES key
     int aesKey = Library.C_GenerateKey(session, new CK_MECHANISM(CK.CKM_AES_KEY_GEN),
