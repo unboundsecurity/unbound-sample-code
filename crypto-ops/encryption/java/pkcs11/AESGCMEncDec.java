@@ -55,6 +55,7 @@ public class AESGCMEncDec
     byte[] decrypted = Library.C_Decrypt(session, encrypted);
 
     assert Arrays.equals(plainData, decrypted);
+    System.out.println("Test plain and decrypted data is identical - success");
 
     // Close PKCS#11 session
     System.out.println("Close PKCS#11 session");

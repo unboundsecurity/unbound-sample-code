@@ -26,6 +26,7 @@ public class RSAHybridEncDec
     Library.C_Login(session, CK.CKU_USER, pwd); // optional
 
     // Generate key pair
+    System.out.println("Generate key pair");
     int[] keyHandles = Library.C_GenerateKeyPair(session,
       new CK_MECHANISM(CK.CKM_RSA_PKCS_KEY_PAIR_GEN), // RSA generation mechanism
       new CK_ATTRIBUTE[]
@@ -41,6 +42,7 @@ public class RSAHybridEncDec
     int prvKey = keyHandles[1];
 
     // Generate temporary AES key
+    System.out.println("Generate temporary AES key");
     int tempAesKey = Library.C_GenerateKey(session, new CK_MECHANISM(CK.CKM_AES_KEY_GEN),
       new CK_ATTRIBUTE[]
       {
@@ -51,6 +53,7 @@ public class RSAHybridEncDec
       });
 
     // Wrap AES key
+    System.out.println("Wrap AES key");
     CK_RSA_PKCS_OAEP_PARAMS oaepParams = new CK_RSA_PKCS_OAEP_PARAMS();
     oaepParams.hashAlg = CK.CKM_SHA256;
     oaepParams.mgf = CK.CKG_MGF1_SHA256;
@@ -58,9 +61,11 @@ public class RSAHybridEncDec
     byte[] wrappedKey = Library.C_WrapKey(session, oaepMech, pubKey, tempAesKey);
 
     // Generate random IV
+    System.out.println("Generate random IV");
     byte[] iv = Library.C_GenerateRandom(session, 16);
 
     // Encrypt data
+    System.out.println("Encrypt data");
     CK_GCM_PARAMS gcmParams = new CK_GCM_PARAMS();
     gcmParams.pIv = iv;
     gcmParams.ulTagBits = 128;
@@ -69,9 +74,11 @@ public class RSAHybridEncDec
     byte[] encrypted = Library.C_Encrypt(session, plainData);
 
     // Destroy temporary AES key
+    System.out.println("Destroy temporary AES key");
     Library.C_DestroyObject(session, tempAesKey);
 
     // Unwrap AES key
+    System.out.println("Unwrap AES key");
     int unwrappedAesKey = Library.C_UnwrapKey(session, oaepMech, prvKey, wrappedKey,
       new CK_ATTRIBUTE[]
       {
@@ -81,12 +88,15 @@ public class RSAHybridEncDec
       });
 
     // Decrypt data
+    System.out.println("Decrypt data");
     Library.C_DecryptInit(session, gcmMech, unwrappedAesKey);
     byte[] decrypted = Library.C_Decrypt(session, encrypted);
 
     assert Arrays.equals(plainData, decrypted);
+    System.out.println("Test plain and decrypted data is identical - success");
 
     // Close PKCS#11 session
+    System.out.println("Close PKCS#11 session");
     Library.C_CloseSession(session);
     Library.C_Finalize();
   }
