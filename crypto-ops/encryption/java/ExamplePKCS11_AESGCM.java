@@ -6,11 +6,14 @@ public class ExamplePKCS11_AESGCM
 {
   public static void main(String [] args) throws Throwable
   {
+    char[] pwd = null;
+    if (args.length > 0) pwd = args[0].toCharArray();
+
     Library.C_Initialize();
     //Open Session
     System.out.println("Open Session");
     CK_SESSION_HANDLE hSession = Library.C_OpenSession(0, CK.CKF_RW_SESSION | CK.CKF_SERIAL_SESSION);
-
+    Library.C_Login(hSession, CK.CKU_USER, pwd); // Optional if password is null
 
     //Generate AES key
     System.out.println("Generate AES key");

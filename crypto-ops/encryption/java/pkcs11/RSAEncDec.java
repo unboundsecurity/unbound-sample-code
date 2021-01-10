@@ -14,7 +14,7 @@ public class RSAEncDec
   public static void main(String[] args) throws Exception
   {
     char[] pwd = null;
-    if (args.length > 0) pwd = args[1].toCharArray();
+    if (args.length > 0) pwd = args[0].toCharArray();
 
     final byte[] plainData = "PLAIN DATA".getBytes("UTF-8");
     int slotId = 0;
@@ -23,9 +23,10 @@ public class RSAEncDec
     // Open PKCS#11 session
     System.out.println("Open Session and login with default user");
     CK_SESSION_HANDLE session = Library.C_OpenSession(slotId, CK.CKF_RW_SESSION | CK.CKF_SERIAL_SESSION);
-    Library.C_Login(session, CK.CKU_USER, pwd); // optional
+    Library.C_Login(session, CK.CKU_USER, pwd); // Optional if password is null
 
     // Generate key pair
+    System.out.println("Generate key pair");
     int[] keyHandles = Library.C_GenerateKeyPair(session,
       new CK_MECHANISM(CK.CKM_RSA_PKCS_KEY_PAIR_GEN), // RSA generation mechanism
       new CK_ATTRIBUTE[]
@@ -40,14 +41,20 @@ public class RSAEncDec
     int pubKey = keyHandles[0];
     int prvKey = keyHandles[1];
 
+    // Set RSA padding params
+    System.out.println("Set RSA padding params");
     CK_RSA_PKCS_OAEP_PARAMS oaepParams = new CK_RSA_PKCS_OAEP_PARAMS();
     oaepParams.hashAlg = CK.CKM_SHA256;
     oaepParams.mgf = CK.CKG_MGF1_SHA256;
     CK_MECHANISM mech = new CK_MECHANISM(CK.CKM_RSA_PKCS_OAEP, oaepParams);
 
+    // Encrypt Data
+    System.out.println("Encrypt Data");
     Library.C_EncryptInit(session, mech, pubKey);
     byte[] encrypted = Library.C_Encrypt(session, plainData);
 
+    // Decrypt Data
+    System.out.println("Decrypt Data");
     Library.C_DecryptInit(session, mech, prvKey);
     byte[] decrypted = Library.C_Decrypt(session, encrypted);
 
@@ -55,6 +62,7 @@ public class RSAEncDec
     System.out.println("Test plain and decrypted data is identical - success");
 
     // Close PKCS#11 session
+    System.out.println("Close PKCS#11 session");
     Library.C_CloseSession(session);
     Library.C_Finalize();
   }

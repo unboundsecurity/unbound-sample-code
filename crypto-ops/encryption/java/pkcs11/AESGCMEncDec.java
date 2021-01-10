@@ -23,7 +23,7 @@ public class AESGCMEncDec
     // Open PKCS#11 session
     System.out.println("Open Session and login with default user");
     CK_SESSION_HANDLE session = Library.C_OpenSession(slotId, CK.CKF_RW_SESSION | CK.CKF_SERIAL_SESSION);
-    Library.C_Login(session, CK.CKU_USER,  pwd); // optional
+    Library.C_Login(session, CK.CKU_USER,  pwd); // Optional if password is null
 
     // Generate AES key
     System.out.println("Generate AES key");
