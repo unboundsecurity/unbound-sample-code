@@ -1,9 +1,16 @@
+package com.unboundtech;
+
 import com.dyadicsec.cryptoki.*;
 
 import java.util.Arrays;
 
 public class RSAEncDec
 {
+  /***************
+   *
+   * @param args - if default user password is non-empty, provide it as first arg
+   * @throws Exception
+   */
   public static void main(String[] args) throws Exception
   {
     char[] pwd = null;
@@ -14,6 +21,7 @@ public class RSAEncDec
     Library.C_Initialize();
 
     // Open PKCS#11 session
+    System.out.println("Open Session and login with default user");
     CK_SESSION_HANDLE session = Library.C_OpenSession(slotId, CK.CKF_RW_SESSION | CK.CKF_SERIAL_SESSION);
     Library.C_Login(session, CK.CKU_USER, pwd); // optional
 

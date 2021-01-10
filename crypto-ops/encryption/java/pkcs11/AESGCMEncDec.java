@@ -1,23 +1,32 @@
+package com.unboundtech;
+
 import com.dyadicsec.cryptoki.*;
 
 import java.util.Arrays;
 
 public class AESGCMEncDec
 {
+  /***************
+   *
+   * @param args - if default user password is non-empty, provide it as first arg
+   * @throws Exception
+   */
   public static void main(String[] args) throws Exception
   {
     char[] pwd = null;
-    if (args.length > 0) pwd = args[1].toCharArray();
+    if (args.length > 0) pwd = args[0].toCharArray();
 
     final byte[] plainData = "PLAIN DATA".getBytes("UTF-8");
     int slotId = 0;
     Library.C_Initialize();
 
     // Open PKCS#11 session
+    System.out.println("Open Session and login with default user");
     CK_SESSION_HANDLE session = Library.C_OpenSession(slotId, CK.CKF_RW_SESSION | CK.CKF_SERIAL_SESSION);
     Library.C_Login(session, CK.CKU_USER,  pwd); // optional
 
     // Generate AES key
+    System.out.println("Generate AES key");
     int aesKey = Library.C_GenerateKey(session, new CK_MECHANISM(CK.CKM_AES_KEY_GEN),
       new CK_ATTRIBUTE[]
       {
@@ -28,9 +37,11 @@ public class AESGCMEncDec
       });
 
     // Generate random IV
+    System.out.println("Generate random IV");
     byte[] iv = Library.C_GenerateRandom(session, 16);
 
     // Encrypt data
+    System.out.println("Encrypt data");
     CK_GCM_PARAMS gcmParams = new CK_GCM_PARAMS();
     gcmParams.pIv = iv;
     gcmParams.ulTagBits = 128;
@@ -39,12 +50,14 @@ public class AESGCMEncDec
     byte[] encrypted = Library.C_Encrypt(session, plainData);
 
     // Decrypt data
+    System.out.println("Decrypt data");
     Library.C_DecryptInit(session, gcmMech, aesKey);
     byte[] decrypted = Library.C_Decrypt(session, encrypted);
 
     assert Arrays.equals(plainData, decrypted);
 
     // Close PKCS#11 session
+    System.out.println("Close PKCS#11 session");
     Library.C_CloseSession(session);
     Library.C_Finalize();
   }
