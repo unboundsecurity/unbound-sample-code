@@ -1,4 +1,4 @@
-package com.unboundtech;
+package com.unboundtech.tokenization;
 
 import com.dyadicsec.advapi.SDEKey;
 import com.dyadicsec.advapi.SDESessionKey;
