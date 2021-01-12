@@ -37,7 +37,7 @@ public class AESGCMEncDec
     System.out.println("Login");
     KeyStore keyStore = KeyStore.getInstance("PKCS11", "UNBOUND");
     String auth = String.format("{\"username\":\"%s\", \"password\":\"%s\"}", user, pwd);
-    keyStore.load(null, pwd.toCharArray());
+    keyStore.load(null, auth.toCharArray());
 
     // Generate AES key
     System.out.println("Generate AES key");
@@ -57,13 +57,13 @@ public class AESGCMEncDec
     // Encrypt data
     System.out.println("Encrypt data");
     GCMParameterSpec parameterSpec = new GCMParameterSpec(16, iv); // TAG length = 16
-    Cipher encryptCipher = Cipher.getInstance("AES/GCM/NoPadding","DYADIC");
+    Cipher encryptCipher = Cipher.getInstance("AES/GCM/NoPadding","UNBOUND");
     encryptCipher.init(Cipher.ENCRYPT_MODE, aesKey, parameterSpec);
     byte[] encrypted = encryptCipher.doFinal(plainData);
 
     // Decrypt data
     System.out.println("Decrypt data");
-    Cipher decryptCipher = Cipher.getInstance("AES/GCM/NoPadding","DYADIC");
+    Cipher decryptCipher = Cipher.getInstance("AES/GCM/NoPadding","UNBOUND");
     decryptCipher.init(Cipher.DECRYPT_MODE, aesKey, parameterSpec);
     byte[] decrypted = decryptCipher.doFinal(encrypted);
 

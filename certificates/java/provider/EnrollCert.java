@@ -1,8 +1,13 @@
+package com.unboundtech.certificates.provider;
+
+import com.unbound.provider.UBCryptoProvider;
 import sun.security.pkcs10.PKCS10;
 import sun.security.x509.*;
 
 import javax.security.auth.x500.X500Principal;
+import java.io.IOException;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
@@ -20,7 +25,8 @@ public class EnrollCert
 
   private static byte[] generateCSR(KeyPair caKeyPair, String subject) throws Exception
   {
-    // generate PKCS10 certificate request
+    // Generate PKCS10 certificate request
+    System.out.println("Generate PKCS10 certificate request");
     PKCS10 pkcs10 = new PKCS10(caKeyPair.getPublic());
     Signature signature = Signature.getInstance("SHA256WithRSA");
     signature.initSign(caKeyPair.getPrivate());
@@ -34,6 +40,8 @@ public class EnrollCert
 
   private static X509Certificate signCSR(KeyPair caKeyPair, String issuer, int days, byte[] csr) throws Exception
   {
+    // Sign CSR
+    System.out.println("Sign CSR");
     Date from = new Date();
     Date to = new Date(from.getTime() + days * 24*60*60*1000);
     X509CertInfo info = new X509CertInfo();
@@ -58,13 +66,44 @@ public class EnrollCert
     return signCSR(keyPair, subject, days, csr);
   }
 
-  public static void run() throws Exception
+
+  private static void login (String user, String pwd) throws NoSuchProviderException, KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException {
+    // Add Provider to Java Security
+    System.out.println("Add Provider to Java Security");
+    Provider provider = new UBCryptoProvider();
+    Security.addProvider(provider);
+
+    // Login
+    System.out.println("Login");
+    KeyStore keyStore = KeyStore.getInstance("PKCS11", "UNBOUND");
+    String auth = String.format("{\"username\":\"%s\", \"password\":\"%s\"}", user, pwd);
+    keyStore.load(null, auth.toCharArray());
+  }
+
+  /******
+   *
+   * @param args - optional. args[0] : username, args[1] : password
+   *
+   * @throws Exception
+   */
+  public static void main(String[] args) throws Exception
   {
+    String user = "user"; //optional. default is "user"
+    if (args.length > 0) user = args[0];
+    String pwd = null; //optional. default is blank
+    if (args.length > 1) pwd = args[1];
+
+    login(user, pwd);
+
+    // Generate CA key pair
+    System.out.println("Generate CA key pair");
     KeyPair caKeyPair = generateKeyPair(null);
     String issuer = "CN=Issuer";
     X509Certificate caCert = generateSelfSignCert(caKeyPair, issuer, 365);
 
-    KeyPair userKeyPair = generateKeyPair("DYADIC");
+    // Generate user key pair
+    System.out.println("Generate user key pair");
+    KeyPair userKeyPair = generateKeyPair("UNBOUND");
     String subject = "CN=Subject";
     byte[] csr = generateCSR(userKeyPair, subject);
 
