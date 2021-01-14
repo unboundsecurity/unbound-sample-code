@@ -9,7 +9,7 @@ import static com.dyadicsec.cryptoki.CK.*;
 import static com.dyadicsec.cryptoki.CK.CKA_KEY_TYPE;
 import static com.dyadicsec.cryptoki.CK.CKK_EC;
 
-public class Main {
+public class ECDSASignExample {
 
     static Map curves = new HashMap<String, byte[]>();
 
@@ -30,9 +30,12 @@ public class Main {
      * @return
      * @throws CKR_Exception
      */
-    public static CK_SESSION_HANDLE openSession(int slotId) throws CKR_Exception {
+    public static CK_SESSION_HANDLE openSession(int slotId, char[] userPwd) throws CKR_Exception {
         Library.C_Initialize();
-        return Library.C_OpenSession(slotId, CK.CKF_RW_SESSION | CK.CKF_SERIAL_SESSION);
+        System.out.println("Open Session and login with default user");
+        CK_SESSION_HANDLE session = Library.C_OpenSession(slotId, CK.CKF_RW_SESSION | CK.CKF_SERIAL_SESSION);
+        Library.C_Login(session, CK.CKU_USER, userPwd); // Optional if password is null
+        return session;
     }
 
     /**
@@ -52,6 +55,7 @@ public class Main {
      * @throws CKR_Exception
      */
     public static int findKey(CK_SESSION_HANDLE hSession, String id) throws CKR_Exception {
+        System.out.println("Get generated key by UID");
         CK_ATTRIBUTE[] tAttr =
                 {
                         new CK_ATTRIBUTE(CKA_ID, id.getBytes()),
@@ -70,6 +74,7 @@ public class Main {
      * @throws CKR_Exception
      */
     public static void deleteKey(CK_SESSION_HANDLE hSession, int hPrvKey) throws CKR_Exception {
+        System.out.println("Delete key");
         if (hPrvKey != 0) Library.C_DestroyObject(hSession, hPrvKey);
     }
 
@@ -81,6 +86,7 @@ public class Main {
      * @throws CKR_Exception
      */
     public static int generateEcdsa(CK_SESSION_HANDLE hSession, String id) throws CKR_Exception {
+        System.out.println("Generate ECDSA key pair");
 
         CK_ATTRIBUTE[] tPrv =
                 {
@@ -112,6 +118,7 @@ public class Main {
      * @throws CKR_Exception
      */
     public static byte[] signEcdsa(CK_SESSION_HANDLE hSession, int hPrvKey, byte[] data) throws CKR_Exception {
+        System.out.println("Sign data");
         Library.C_SignInit(hSession, new CK_MECHANISM(CK.CKM_ECDSA_SHA256), hPrvKey);
         return Library.C_Sign(hSession, data);
     }
@@ -125,12 +132,14 @@ public class Main {
      * @throws CKR_Exception
      */
     public static void verifyEcdsa(CK_SESSION_HANDLE hSession, int hPrvKey, byte[] data, byte[] signature) throws CKR_Exception {
+        System.out.println("Verify data:");
         CK_ATTRIBUTE[] tAttr =
                 {
                         new CK_ATTRIBUTE(CKA_EC_POINT),
                         new CK_ATTRIBUTE(CKA_EC_PARAMS),
                 };
 
+        System.out.println(" - Get parameters of the public key");
         Library.C_GetAttributeValue(hSession, hPrvKey, tAttr);
 
         tAttr = new CK_ATTRIBUTE[]{
@@ -141,13 +150,23 @@ public class Main {
                 new CK_ATTRIBUTE(CKA_KEY_TYPE, CKK_EC),
         };
 
+        System.out.println(" - Create public key object from attributes");
         int hPubKey = Library.C_CreateObject(hSession, tAttr); // crate a local key for the verification
         Library.C_VerifyInit(hSession, new CK_MECHANISM(CK.CKM_ECDSA_SHA256), hPubKey);
         Library.C_Verify(hSession, data, signature);
+        System.out.println(" - Signature verification success");
         deleteKey(hSession, hPubKey);
     }
 
+    /***************
+     *
+     * @param args - if default user password is non-empty, provide it as first arg
+     * @throws Exception
+     */
     public static void main(String[] args) throws CKR_Exception {
+        char[] pwd = null;
+        if (args.length > 0) pwd = args[0].toCharArray();
+
         int slotId =0;
         String id = "ecdsa-private-key";
 
@@ -157,13 +176,14 @@ public class Main {
         byte[] data = "test".getBytes();
 
         try {
-            hSession = openSession(slotId);
+            hSession = openSession(slotId, pwd);
             generateEcdsa(hSession, id);
             hPrvKey = findKey(hSession, id);
 
             byte[] signature = signEcdsa(hSession, hPrvKey, data);
             verifyEcdsa(hSession, hPrvKey, data, signature);
         } finally {
+            System.out.println("Delete objects and close session");
             deleteKey(hSession, hPrvKey);
             closeSession(hSession);
         }

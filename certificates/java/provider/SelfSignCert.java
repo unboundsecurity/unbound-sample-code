@@ -1,5 +1,3 @@
-package com.unboundtech.certificates.provider;
-
 import javax.security.auth.x500.X500Principal;
 
 import com.unbound.provider.UBCryptoProvider;

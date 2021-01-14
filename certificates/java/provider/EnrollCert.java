@@ -1,5 +1,3 @@
-package com.unboundtech.certificates.provider;
-
 import com.unbound.provider.UBCryptoProvider;
 import sun.security.pkcs10.PKCS10;
 import sun.security.x509.*;

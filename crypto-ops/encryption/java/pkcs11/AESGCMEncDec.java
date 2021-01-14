@@ -1,5 +1,3 @@
-package com.unboundtech.crypto_ops.encryption.pkcs11;
-
 import com.dyadicsec.cryptoki.*;
 
 import java.util.Arrays;

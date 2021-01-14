@@ -1,5 +1,3 @@
-package com.unboundtech.crypto_ops.signing.pkcs11;
-
 import com.dyadicsec.cryptoki.*;
 
 public class ECDSASign

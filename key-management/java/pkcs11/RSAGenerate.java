@@ -1,5 +1,3 @@
-package com.unboundtech.key_management.pkcs11;
-
 import com.dyadicsec.cryptoki.*;
 
 public class RSAGenerate

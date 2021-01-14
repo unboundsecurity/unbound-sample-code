@@ -1,5 +1,3 @@
-package com.unboundtech.crypto_ops.encryption.provider;
-
 import com.unbound.provider.UBCryptoProvider;
 
 import javax.crypto.Cipher;
