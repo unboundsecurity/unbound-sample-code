@@ -26,8 +26,16 @@ int main(int argc, char *argv[])
 	if (rv != CKR_OK)
 		halt(rv);
 
-	char password[] = ""; // ------ set your password here -------
-	rv = C_Login(hSession, CKU_USER, CK_CHAR_PTR(password), CK_ULONG(strlen(password)));
+	CK_CHAR_PTR password = nullptr;
+	CK_ULONG pass_len = 0;
+	if (argc > 1) 
+	{
+		password = (CK_CHAR_PTR)argv[1];
+		pass_len = (CK_ULONG)strlen(argv[1]);
+	}
+	
+	//char password[] = ""; // ------ set your password here -------
+	rv = C_Login(hSession, CKU_USER, CK_CHAR_PTR(password), pass_len);
 	if (rv != CKR_OK)
 		halt(rv);
 

@@ -10,6 +10,9 @@ static void halt(CK_RV rv)
 	exit(-1);
 }
 
+/***********************************************
+* argv[1] - Default user password, if not empty
+***********************************************/
 int main(int argc, char *argv[])
 {
 	CK_SLOT_ID slot_id = 0; // default slot ID
@@ -25,8 +28,15 @@ int main(int argc, char *argv[])
 	if (rv != CKR_OK)
 		halt(rv);
 
-	char password[] = ""; // ------ set your password here -------
-	rv = C_Login(hSession, CKU_USER, CK_CHAR_PTR(password), CK_ULONG(strlen(password)));
+	CK_CHAR_PTR password = nullptr;
+	CK_ULONG pass_len = 0;
+	if (argc > 1) 
+	{
+		password = (CK_CHAR_PTR)argv[1];
+		pass_len = (CK_ULONG)strlen(argv[1]);
+	}
+	
+	rv = C_Login(hSession, CKU_USER, CK_CHAR_PTR(password), pass_len);
 	if (rv != CKR_OK)
 		halt(rv);
 

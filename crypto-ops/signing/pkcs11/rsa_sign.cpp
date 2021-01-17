@@ -99,6 +99,7 @@ void find_and_verify(CK_BYTE_PTR signature, CK_ULONG signature_len)
 	if (rv != CKR_OK)
 		halt(rv);
 
+	C_DestroyObject(hSession, prv_key);
 	// Close PKCS#11 session (it destroys temporary key)
 	C_CloseSession(hSession);
 }
