@@ -17,7 +17,7 @@ static const int rsa_sample_key_name_len = sizeof(rsa_sample_key_name) - 1; // e
 
 static const char data_to_sign[] = "data to sign";
 
-void find_and_verify(CK_BYTE_PTR signature, CK_ULONG signature_len)
+void find_and_verify(CK_BYTE_PTR signature, CK_ULONG signature_len, CK_CHAR_PTR password, CK_ULONG pass_len)
 {
 	CK_SLOT_ID slot_id = 0; // default slot ID
 	CK_SESSION_HANDLE hSession = 0;
@@ -28,8 +28,7 @@ void find_and_verify(CK_BYTE_PTR signature, CK_ULONG signature_len)
 	if (rv != CKR_OK)
 		halt(rv);
 
-	char password[] = ""; // ------ set your password here -------
-	rv = C_Login(hSession, CKU_USER, CK_CHAR_PTR(password), CK_ULONG(strlen(password)));
+	rv = C_Login(hSession, CKU_USER, password, pass_len);
 	if (rv != CKR_OK)
 		halt(rv);
 
@@ -104,6 +103,9 @@ void find_and_verify(CK_BYTE_PTR signature, CK_ULONG signature_len)
 	C_CloseSession(hSession);
 }
 
+/***********************************************
+* argv[1] - Default user password, if not empty
+***********************************************/
 int main(int argc, char *argv[])
 {
 	CK_SLOT_ID slot_id = 0; // default slot ID
@@ -118,8 +120,15 @@ int main(int argc, char *argv[])
 	if (rv != CKR_OK)
 		halt(rv);
 
-	char password[] = ""; // ------ set your password here -------
-	rv = C_Login(hSession, CKU_USER, CK_CHAR_PTR(password), CK_ULONG(strlen(password)));
+	CK_CHAR_PTR password = nullptr;
+	CK_ULONG pass_len = 0;
+	if (argc > 1) 
+	{
+		password = (CK_CHAR_PTR)argv[1];
+		pass_len = (CK_ULONG)strlen(argv[1]);
+	}
+	
+	rv = C_Login(hSession, CKU_USER, CK_CHAR_PTR(password), pass_len);
 	if (rv != CKR_OK)
 		halt(rv);
 
@@ -182,7 +191,7 @@ int main(int argc, char *argv[])
 	C_CloseSession(hSession);
 
 	// start another session, find the key and verify signature
-	find_and_verify(signature, signature_len);
+	find_and_verify(signature, signature_len, password, pass_len);
 
 	C_Finalize(NULL);
 }

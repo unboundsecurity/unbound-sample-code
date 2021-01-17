@@ -9,6 +9,9 @@ void halt(CK_RV rv)
 	exit(-1);
 }
 
+/***********************************************
+* argv[1] - Default user password, if not empty
+***********************************************/
 int main(int argc, char *argv[])
 {
 	CK_RV rv;
@@ -34,7 +37,6 @@ int main(int argc, char *argv[])
 		pass_len = (CK_ULONG)strlen(argv[1]);
 	}
 	
-	//char password[] = ""; // ------ set your password here -------
 	rv = C_Login(hSession, CKU_USER, CK_CHAR_PTR(password), pass_len);
 	if (rv != CKR_OK)
 		halt(rv);

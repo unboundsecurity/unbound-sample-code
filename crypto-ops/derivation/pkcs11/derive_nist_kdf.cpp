@@ -25,6 +25,8 @@ int main(int argc, char *argv[])
 	rv = C_Initialize(NULL);
 	if (rv != CKR_OK)
 		halt(rv);
+	
+	printf("Open PKCS11 session and login");
 	rv = C_OpenSession(slot, CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL, NULL, &hSession);
 	if (rv != CKR_OK)
 		halt(rv);
