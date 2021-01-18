@@ -1,5 +1,5 @@
 {
-  "apiKey": "dGVzdDpmOWYwMTc2Zi1kYjRlLTQzZWUtYjQyMi0yMDEyMDFiOWE3ZTM=",
+  "apiKey": "ZXJjOmE4M2U3MWNiLWMzOWYtNGY3Ny04NWQ2LWYwMGUzNGExYjdhMQ==",
   "caspHost": "localhost",
   "ethChainId": 3,
   "botKeyStorePassword": "12345678",
@@ -7,7 +7,7 @@
   "gasPriceGwei": 10,
   "vaults": [
     {
-      "name": "UBTKN Contract 8       007",
+      "name": "UBTKN Contract 8 009",
       "hierarchy": "NONE",
       "contractSource": "UnboundToken.sol",
       "providerKind": "ETHTEST-ROPSTEN",
@@ -15,24 +15,13 @@
         "A": {
           "requiredApprovals": 1,
           "members": [
-            "bot2"
-          ]
-        },
-        "B": {
-          "requiredApprovals": 1,
-          "members": [
-            "bot1"
+            "casp-bot1d52a2621c61"
           ]
         }
-      },
-      "publicKeyDer": "3056301006072A8648CE3D020106052B8104000A03420004F7E5BA9025DAA28A1A46FAC84605937E84E314874DCE753AF850C09445D9E8D296B4E0BB863321AE0C698D38487DC1F2A105206D325951B681B170924C19F6EA",
-      "address": "0x4f2FB176F7459aA47a4F9e4e3679C743d0489878",
-      "contractAddress": "0x50C80C58abCD4ecb77b2F0C475829EbaC730B858",
-      "minted": 1000,
-      "burned": 100
+      }
     },
     {
-      "name": "UBTKN exchange 001",
+      "name": "UBTKN exchange 003",
       "hierarchy": "BIP44",
       "coinType": 60,
       "firstAccountName": "Default",
@@ -41,18 +30,17 @@
         "A": {
           "requiredApprovals": 1,
           "members": [
-            "bot2",
-            "bot1"
+            "casp-bot1d52a2621c61"
           ]
         }
-      },
-      "publicKeyDer": "3056301006072A8648CE3D020106052B8104000A03420004A9E6409FFEEFAF8ED1175A71CF8AFEABA9D0191885B67EF337A6063F371BCAF3D140AEC553264C8284218A71A06F34DE594012C280651007AA546FFE9A6F8D02",
-      "address": "0xA0B67606F48a73E86D42C99f7308aA862aAfe1da"
+      }
     }
   ],
   "activeAccount": {
-    "id": "86a41494-2298-40ce-b547-3f2a90f9c4b3",
-    "name": "CustoDigit",
-    "isGlobal": false
+    "id": "d66ec523-9fe3-4885-bb00-2b67cc389831",
+    "name": "CASP",
+    "isGlobal": false,
+    "isDeletable": false,
+    "creationTime": "2021-01-17T07:46:47.437Z"
   }
 }

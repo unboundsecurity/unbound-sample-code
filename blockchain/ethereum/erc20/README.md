@@ -1,9 +1,9 @@
 # ERC20 Contract Deployment with Unbound CASP
-This POC demonstrates how to use Unbound Crypto Assets Services Platform (CASP) for deploying, managing and executing transactions with a custom Ethereum ERC20 contract.
+This demo application demonstrates how to use Unbound Crypto Assets Services Platform (CASP) for deploying, managing and executing transactions with a custom Ethereum ERC20 contract.
 
 #	1. CASP Overview
 
-Unbound Tech’s Crypto Asset Security Platform (“**CASP**”) is a pure-software solution that runs on any endpoint, server or cloud, at a security level above and beyond all existing solutions for blockchain custody and trading of crypto assets.
+Unbound Security's Crypto Asset Security Platform (“**CASP**”) is a pure-software solution that runs on any endpoint, server or cloud, at a security level above and beyond all existing solutions for blockchain custody and trading of crypto assets.
 
 The CASP solution is built on the technological foundation of secure multiparty computation (MPC). As used in the CASP solution, it provides the following benefits:
 -	A risk-based [Risk-Based Quorum Policy](https://www.unboundtech.com/docs/CASP/CASP_Developers_Guide-HTML/Content/Products/CASP/CASP_Offering_Description/Solution.htm#_Ref508800931) that provides a flexible mechanism to handle transaction signing by multiple participants across multiple groups.
@@ -19,8 +19,6 @@ The basic system architecture is shown in the following figure.
 The **CASP Orchestrator** is the heart of the CASP system. It communicates with all parts of the system, initiates creation of the key shares for the vault, manages the different distributed procedures, and acts as the external entry point for the relevant applications, such as the crypto asset applications.
 
 The CASP Orchestrator is backed by the powerful key management capabilities of Unbound Key Control (UKC). UKC works together with the **Participants** to provide the complete approval signature for transactions, where Participants can be mobile devices, desktops, servers, or bots. CASP creates an ECDSA key, EdDSA key, or Schnorr key, which is used for all transactions, along with support for BIP derivations.
-
-The customer's virtual machine (VM) talks directly with CASP and contains two bots that are used as participants to approve operations. The VM also communicated with Hyperledger. See [Using the Hyperledger Fabric Client with Unbound UKC PKCS11 CryptoSuite](https://github.com/unbound-tech/ukc-hyperledger-pkcs11) for more information.
 
 CASP’s open architecture enables communication with different types of crypto asset ledgers. For example, the ETH wallet enables communication with an Ethereum ledger. It prepares a transaction from the available ledger data and sends it to CASP. CASP then signs the transaction and returns it, which then transmits the signed transaction to the ledger. CASP seamlessly works with many different types of ledgers.
 
