@@ -1,0 +1,28 @@
+{
+  "name": "casp-demo-btc-proof-of-ownership",
+  "version": "1.0.0",
+  "description": "Demonstrates using Unbound CASP for generating and verifying signature for Bitcoin Proof of Ownership",
+  "main": "verify.js",
+  "dependencies": {
+    "base-58": "^0.0.1",
+    "asn1": "^0.2.4",
+    "bitcoinjs-message": "^2.2.0",
+    "bitcoinjs-lib": "^5.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node verify.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "unbound",
+    "casp",
+    "bitcoin",
+    "btc",
+    "signature",
+    "ownership",
+    "proof"
+  ],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,52 @@
+{
+    "operationID": "eef024a8-048f-4d3f-b718-2e6bc15ef14e",
+    "kind": "QUORUM_SIGN",
+    "status": "COMPLETED",
+    "statusText": "Completed",
+    "createdAt": "2021-02-11T08:36:04.533Z",
+    "vaultID": "87552981-dd06-467c-90d6-59ec975a942a",
+    "description": "Test",
+    "isApproved": true,
+    "accountID": "e5c8ce3c-7b9d-43c6-ad54-b473c3413223",
+    "groups": [
+        {
+            "name": "A",
+            "members": [
+                {
+                    "approvedAt": "2021-02-11T08:36:07.997Z",
+                    "id": "8442a597-e1e7-4708-8a7d-72ea9aa5f8f5",
+                    "isApproved": true,
+                    "name": "casp-botfb959077d603",
+                    "status": "ACTIVATED",
+                    "label": "casp-botfb959077d603",
+                    "isGlobal": false,
+                    "isActive": true,
+                    "globalStatus": "ACTIVATED",
+                    "isOffline": false
+                }
+            ],
+            "requiredApprovals": 1,
+            "order": 0,
+            "deactivateAllowed": false,
+            "isOffline": false
+        }
+    ],
+    "vaultName": "kpmg",
+    "publicKeys": [
+        "3056301006072A8648CE3D020106052B8104000A0342000471A50AA19C7907F113A39409C9BB39F612E8A23223CDE454F17F91FCFFA2E56981411D2A6535754E7E0CAC511A3E4B5D7CE8150F316A37F5E2C7EF51183D805C"
+    ],
+    "dataToSign": [
+        "d0e5595ac689a1df9f0b13443e0efd876eeb762d50a05f7179b1506bfccfeec5"
+    ],
+    "signatures": [
+        "1FDDA3173D3AC20E7F7DDBA292A984C70FDCB7E4556BBE1A1433CA059CECB968423AB79E50392D98AA55D066DFF2E9351318F7E9AF375368F0B1DB1259349853"
+    ],
+    "v": [
+        1
+    ],
+    "subAccount": 0,
+    "collectedData": {
+        "collectionComplete": true,
+        "dataCollectionGroups": []
+    }
+}
