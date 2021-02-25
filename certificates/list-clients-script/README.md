@@ -1,27 +1,20 @@
-# Unbound Support Utilities
-
-This repository provides utilities and scripts used with Unbound products.
-
-The following are provided:
-1. ukc-list-clients.sh
-
-## ukc-list-clients.sh
+# List Certificate Expiration Dates for UKC Clients
 
 The *ukc-list-clients.sh* script was created by Unbound to list the UKC clients along with their certificate expiration dates.
 
 The script runs on all partitions in UKC that are inherited.
 
-**Usage:**
+## Usage
 
 `ukc-list-clients.sh <UKC_URL> <ROOT_SO_PASSWORD> [EXPIRY_DAYS]`
 
 If *EXPIRY_DAYS* is not provided, all clients are listed.
   
-**Example:**
+## Example
 
 `./ukc-list-clients.sh https://<EP URL> <Password> 2000`
 
-**Sample response:**
+## Sample response
 ```
 Partition, Client name, Client certificate expiration date
 ----------------------------------------------------------
