@@ -1,8 +1,10 @@
-# Cryptographic Operations
+# Authenticate using client certificate without password
 
-Sample code showing the basic building blocks to implement cryptosystems. The samples use PKCS#11 and/or the Java provider.
+Samples to login and perform operations using client certificate without the need to supply password
 
-1. Derive - derive secondary key
-2. Encrypt - encryption and decryption of data
-3. Sign - data signing and signature verification
-4. Wrap - save key material while securing it by another key
+## prerequisites
+1. default user's password must be enpty. (not set)
+2. Client certificate PFX file availabe
+3. Server's CA file availabe - If you want to validate server certificate
+
+
