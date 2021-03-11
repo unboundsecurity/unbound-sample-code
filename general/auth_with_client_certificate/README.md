@@ -13,8 +13,9 @@ Sample code is provided to login and perform a encryption operation using a clie
 
 ## Usage
 
-- Follow the comments in [login_and_encrypt.cs](./c-sharp/login_and_encrypt.cs) and change the needed variables in **Main** function according to your environment. For example, update the certificate paths and hostname.
-- Compile and run the code with no additional arguments.
+1. Follow the comments in [login_and_encrypt.cs](./c-sharp/login_and_encrypt.cs) and change the needed variables in **Main** function according to your environment. For example, update the certificate paths and hostname.
+2. Compile and run the code with no additional arguments.
 
-To validate the server certificate, set the relevant variable in [login_and_encrypt.cs](./c-sharp/login_and_encrypt.cs) to *true*.
+To validate the server certificate:
+1. Set the relevant variable in [login_and_encrypt.cs](./c-sharp/login_and_encrypt.cs) to *true*.
 
