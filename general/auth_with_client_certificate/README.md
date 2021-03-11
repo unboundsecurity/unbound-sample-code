@@ -1,11 +1,15 @@
-# Authenticate using client certificate without password
+# Authenticate using a Client Certificate without a Password
 
-Samples to login and perform encrypt operation using client certificate without the need to supply password
+Sample code is provided to login and perform a encryption operation using a client certificate without the need to supply a password.
 
-## prerequisites
-1. Default user's password must be enpty. (not set)
-2. Client certificate PFX file availabe
-3. An existing key in UKC to encrypt with
-3. Optional: If you want to validate server certificate, UKC Server CA pem file availabe and installed into the Trusted ROOT CA directory of Current User Certificates
+## Prerequisites
 
+- Default user's password must be empty (i.e., not set).
+- Client certificate PFX file
+- An existing key in UKC (to be used for encryption).
+- (Optional) Validating the server certificate requires that UKC Server CA *pem* file, and that it is installed in the Trusted ROOT CA directory of current user certificates.
 
+## Usage
+
+1. Compile the code.
+2. Run it.
