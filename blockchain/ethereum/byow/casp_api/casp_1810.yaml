@@ -45,17 +45,17 @@ info:
 
 
     - [Unbound CASP Developers
-    Guide](https://www.unboundtech.com/docs/CASP/CASP_Developers_Guide-HTML/casp-dev-guide.htm)
+    Guide](https://www.unboundsecurity.com/docs/CASP/CASP_Developers_Guide-HTML/casp-dev-guide.htm)
 
     - [Unbound CASP User Guide](
-    https://www.unboundtech.com/docs/CASP/CASP_User_Guide-HTML/casp-user-guide.htm)
+    https://www.unboundsecurity.com/docs/CASP/CASP_User_Guide-HTML/casp-user-guide.htm)
 
     - [Unbound CASP Sample Apps](
-    https://www.unboundtech.com/docs/CASP/CASP_Sample_Apps-HTML/casp-sample-apps.htm)
+    https://www.unboundsecurity.com/docs/CASP/CASP_Sample_Apps-HTML/casp-sample-apps.htm)
   contact:
     name: Unbound Tech Support
-    url: 'https://www.unboundtech.com/'
-    email: support@unboundtech.com
+    url: 'https://www.unboundsecurity.com/'
+    email: support@unboundsecurity.com
 tags:
   - name: Getting Started
     description: >-
@@ -72,7 +72,7 @@ tags:
        5.  Withdrawing money from vaults
        6.  Managing keychains
 
-       See the [Unbound CASP User Guide](https://www.unboundtech.com/docs/CASP/CASP_User_Guide-HTML/casp-user-guide.htm) for details about installing CASP.
+       See the [Unbound CASP User Guide](https://www.unboundsecurity.com/docs/CASP/CASP_User_Guide-HTML/casp-user-guide.htm) for details about installing CASP.
 
        ## REST API Requests
 
@@ -191,7 +191,7 @@ tags:
       Use the relevant endpoint based on the currency you want to work with. The
       list of supported currencies and the matching short names can be found in
       [Supported
-      Coins](https://www.unboundtech.com/docs/CASP/casp.html#supported-coins).
+      Coins](https://www.unboundsecurity.com/docs/CASP/casp.html#supported-coins).
       In this document, Bitcoin is used as an example.
 
 
