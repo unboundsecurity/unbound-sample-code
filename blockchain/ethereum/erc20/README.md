@@ -228,4 +228,4 @@ For example, to create 2 groups, where one group has 1 out of 2 required and the
 ## 5.2. Mobile App
 You can use the CASP mobile app to approve transactions. First, in the [Web UI](file:///C:/FlareOut/Output/CASP/CASP_User_Guide-HTML/Content/Products/CASP/CASP_User_Guide/Web_Interface.htm) create a [new participant](file:///C:/FlareOut/Output/CASP/CASP_User_Guide-HTML/Content/Products/CASP/CASP_User_Guide/Web_Interface.htm#Participants) and activate it on the mobile app. Next, add the participant to the vault approval group using the procedure described in the previous section.
 
-See [CASP Mobile App](https://www.unboundtech.com/docs/CASP/CASP_User_Guide-HTML/Content/Products/CASP/CASP_User_Guide/Mobile_App.htm) for more information.
+See [CASP Mobile App](https://www.unboundsecurity.com/docs/CASP/CASP_User_Guide-HTML/Content/Products/CASP/CASP_User_Guide/Mobile_App.htm) for more information.
