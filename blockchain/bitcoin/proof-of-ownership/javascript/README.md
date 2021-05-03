@@ -4,6 +4,6 @@ This sample app shows how to use Unbound CASP to generate a signature that can b
 
 ## Usage
 
-1. Create a CASP sign operatation with the [getSignOperation](https://www.unboundtech.com/docs/CASP/API/casp-byow.html#get-sign-operation) endpoint and save the data received from CASP.
-1. Create the input [JSON file](https://github.com/unbound-tech/unbound-sample-code/blob/main/blockchain/bitcoin/proof-of-ownership/javascript/casp-sign-op-complete.json) using the data from the first step.
-1. Test it using your own CASP vault with the [generate script](https://github.com/unbound-tech/unbound-sample-code/blob/main/blockchain/bitcoin/proof-of-ownership/javascript/generate.js).
+1. Create a CASP sign operatation with the [getSignOperation](https://www.unboundsecurity.com/docs/CASP/API/casp-byow.html#get-sign-operation) endpoint and save the data received from CASP.
+1. Create the input [JSON file](https://github.com/unboundsecurity/unbound-sample-code/blob/main/blockchain/bitcoin/proof-of-ownership/javascript/casp-sign-op-complete.json) using the data from the first step.
+1. Test it using your own CASP vault with the [generate script](https://github.com/unboundsecurity/unbound-sample-code/blob/main/blockchain/bitcoin/proof-of-ownership/javascript/generate.js).
