@@ -1,8 +1,8 @@
 /**
  * Generates a 'proof of ownership' message hash.
  * The generated hash can be used as CASP dataToSign
- * 1. Start a CASP sign operation, using the hash as 'dataToSign' (see https://www.unboundtech.com/docs/CASP/API/casp-byow.html#start-a-signing-process)
- * 2. Once the signature is complete, copy the response from (https://www.unboundtech.com/docs/CASP/API/casp-byow.html#get-sign-operation) 
+ * 1. Start a CASP sign operation, using the hash as 'dataToSign' (see https://www.unboundsecurity.com/docs/CASP/API/casp-byow.html#start-a-signing-process)
+ * 2. Once the signature is complete, copy the response from (https://www.unboundsecurity.com/docs/CASP/API/casp-byow.html#get-sign-operation) 
  *    into the casp-op.json file in this project
  * 3. Run `npm start` to verify the signature and get verification data for external verifiers
  */
