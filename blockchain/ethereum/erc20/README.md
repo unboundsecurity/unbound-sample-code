@@ -6,7 +6,7 @@ This demo application demonstrates how to use Unbound Crypto Assets Services Pla
 Unbound Security's Crypto Asset Security Platform (“**CASP**”) is a pure-software solution that runs on any endpoint, server or cloud, at a security level above and beyond all existing solutions for blockchain custody and trading of crypto assets.
 
 The CASP solution is built on the technological foundation of secure multiparty computation (MPC). As used in the CASP solution, it provides the following benefits:
--	A risk-based [Risk-Based Quorum Policy](https://www.unboundtech.com/docs/CASP/CASP_Developers_Guide-HTML/Content/Products/CASP/CASP_Offering_Description/Solution.htm#_Ref508800931) that provides a flexible mechanism to handle transaction signing by multiple participants across multiple groups.
+-	A risk-based [Risk-Based Quorum Policy](https://www.unboundsecurity.com/docs/CASP/CASP_Developers_Guide-HTML/Content/Products/CASP/CASP_Offering_Description/Solution.htm#_Ref508800931) that provides a flexible mechanism to handle transaction signing by multiple participants across multiple groups.
 -	Each private key exists as several separate random shares stored on separate locations and is refreshed constantly.
 -	Key material never exists in the clear at any point of its lifecycle. Key shares are never combined at any point in time – not even when used or when created.
 -	An attacker needs to get control over all involved servers and clients, simultaneously.
@@ -148,27 +148,27 @@ You can find the cold backup private key on the VM:
 /root/unbound/casp_backup.pem
 ```
 
-See [Key Backup and Restore](https://www.unboundtech.com/docs/CASP/Versions/1.0.1905/CASP_User_Guide-HTML/Content/Products/CASP/CASP_User_Guide/Key_Backup_and_Restore.htm) for more information.
+See [Key Backup and Restore](https://www.unboundsecurity.com/docs/CASP/Versions/1.0.1905/CASP_User_Guide-HTML/Content/Products/CASP/CASP_User_Guide/Key_Backup_and_Restore.htm) for more information.
 
 ## 4.2. CASP Documentation
 CASP has these associated documents:
 
-- [CASP Release Notes](https://www.unboundtech.com/docs/CASP/Versions/1.0.1905/CASP_Release_Notes-HTML/Content/Products/Unbound_Cover_Page.htm)
-- [CASP Frequently Asked Questions](https://www.unboundtech.com/docs/CASP/Versions/1.0.1905/CASP_FAQ-HTML/Content/Products/Unbound_Cover_Page.htm)
-- [CASP Developers Guide with API Reference](https://www.unboundtech.com/docs/CASP/Versions/1.0.1905/CASP_Developers_Guide-HTML/Content/Products/Unbound_Cover_Page.htm)
-- [CASP User Guide](https://www.unboundtech.com/docs/CASP/Versions/1.0.1905/CASP_User_Guide-HTML/Content/Products/Unbound_Cover_Page.htm)
-- [CASP Participant SDK](https://www.unboundtech.com/docs/CASP/Versions/1.0.1905/CASP_Participant_SDK-HTML/Content/Products/Unbound_Cover_Page.htm)
+- [CASP Release Notes](https://www.unboundsecurity.com/docs/CASP/Versions/1.0.1905/CASP_Release_Notes-HTML/Content/Products/Unbound_Cover_Page.htm)
+- [CASP Frequently Asked Questions](https://www.unboundsecurity.com/docs/CASP/Versions/1.0.1905/CASP_FAQ-HTML/Content/Products/Unbound_Cover_Page.htm)
+- [CASP Developers Guide with API Reference](https://www.unboundsecurity.com/docs/CASP/Versions/1.0.1905/CASP_Developers_Guide-HTML/Content/Products/Unbound_Cover_Page.htm)
+- [CASP User Guide](https://www.unboundsecurity.com/docs/CASP/Versions/1.0.1905/CASP_User_Guide-HTML/Content/Products/Unbound_Cover_Page.htm)
+- [CASP Participant SDK](https://www.unboundsecurity.com/docs/CASP/Versions/1.0.1905/CASP_Participant_SDK-HTML/Content/Products/Unbound_Cover_Page.htm)
 
 ## 4.3. APIs for Common Functions
 The following list provides links to CASP APIs that provide common wallet functions.
-- Wallet creation - [Create new vault](https://www.unboundtech.com/docs/CASP/API/casp-1.0.1905-byow.html#create-new-vault)
-    - Generate address - [Create a new address](https://www.unboundtech.com/docs/CASP/API/casp-1.0.1905-byow.html#create-a-new-address)
- 	- Retrieve public key - [Get vault public key](https://www.unboundtech.com/docs/CASP/API/casp-1.0.1905-byow.html#get-vault-public-key)
-- Get value of funds of an address/account - [Get BIP44 account balance](https://www.unboundtech.com/docs/CASP/API/casp-1.0.1905-coin.html#get-bip44-account-balance)
+- Wallet creation - [Create new vault](https://www.unboundsecurity.com/docs/CASP/API/casp-1.0.1905-byow.html#create-new-vault)
+    - Generate address - [Create a new address](https://www.unboundsecurity.com/docs/CASP/API/casp-1.0.1905-byow.html#create-a-new-address)
+ 	- Retrieve public key - [Get vault public key](https://www.unboundsecurity.com/docs/CASP/API/casp-1.0.1905-byow.html#get-vault-public-key)
+- Get value of funds of an address/account - [Get BIP44 account balance](https://www.unboundsecurity.com/docs/CASP/API/casp-1.0.1905-coin.html#get-bip44-account-balance)
 - Transaction signing - Start a signing process
-    - Send/Receive/Mint funds to an address/account - [Start withdrawal process](https://www.unboundtech.com/docs/CASP/API/casp-1.0.1905-coin.html#start-withdrawal-process)
+    - Send/Receive/Mint funds to an address/account - [Start withdrawal process](https://www.unboundsecurity.com/docs/CASP/API/casp-1.0.1905-coin.html#start-withdrawal-process)
 
-A full API reference is found in the [CASP Developers Guide](https://www.unboundtech.com/docs/CASP/Versions/1.0.1905/CASP_Developers_Guide-HTML/Content/Products/Unbound_Cover_Page.htm).
+A full API reference is found in the [CASP Developers Guide](https://www.unboundsecurity.com/docs/CASP/Versions/1.0.1905/CASP_Developers_Guide-HTML/Content/Products/Unbound_Cover_Page.htm).
 
 # 5. Next Steps
 The following steps may be useful in further utilizing CASP capabilities.
