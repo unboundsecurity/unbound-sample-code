@@ -23,6 +23,7 @@ async function selectParticipant(options) {
   const participantsUrl = `${options.caspMngUrl}/accounts/${options.activeAccount.id}/participants`;
   util.showSpinner('Fetching participants');
   var participants = (await util.superagent.get(participantsUrl)).body;
+  participants = participants.items || participants;
   util.hideSpinner();
   participants = participants.filter(p => p.isActive);
 

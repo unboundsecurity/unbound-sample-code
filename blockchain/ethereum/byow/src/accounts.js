@@ -18,7 +18,8 @@ const superagent = util.superagent;
  */
 async function selectActiveAccount(options) {
   util.showSpinner('Fetching accounts');
-  const accounts = (await superagent.get(`${options.caspMngUrl}/accounts`)).body;
+  let accounts = (await superagent.get(`${options.caspMngUrl}/accounts`)).body;
+  accounts = accounts.items || accounts;
   util.hideSpinner();
   var account = accounts[0];
   if(accounts.length > 1) {

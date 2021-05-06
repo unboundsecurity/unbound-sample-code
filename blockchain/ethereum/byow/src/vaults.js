@@ -23,6 +23,7 @@ async function selectActiveVault(options) {
   const vaultsUrl = `${options.caspMngUrl}/accounts/${options.activeAccount.id}/vaults`;
   util.showSpinner('Fetching vaults');
   var vaults = (await superagent.get(vaultsUrl)).body;
+  vaults = vaults.items || vaults;
   util.hideSpinner();
 
   vaults = vaults.filter(v => v.isActive);
