@@ -1,7 +1,7 @@
 {
   "name": "casp-erc20-js-demo",
   "version": "1.0.0",
-  "description": "Demonstrates how to use Unbound-tech CASP for deploying and interacting with a custom Ethereum ERC20 token contract",
+  "description": "Demonstrates how to use Unbound CASP for deploying and interacting with a custom Ethereum ERC20 token contract",
   "main": "casp-cli.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
