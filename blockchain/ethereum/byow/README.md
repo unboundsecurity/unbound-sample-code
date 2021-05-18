@@ -32,11 +32,11 @@ Request a signature approval from vault participants and use the signature to si
 ### Installation
 * Get the source code
     ```
-    $ git clone https://github.com/unboundsecurity/CASP-BYOW-JS-Demo.git
+    $ git clone https://github.com/unboundsecurity/unbound-sample-code.git
     ```
 * Install dependencies
     ```
-    $ cd CASP-BYOW-JS-Demo
+    $ cd unbound-sample-code/blockchain/ethereum/byow/
     $ npm install
     ```
 * Run the demo
