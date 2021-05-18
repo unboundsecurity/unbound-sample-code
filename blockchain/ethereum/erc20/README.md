@@ -89,7 +89,7 @@ Use the following steps to run the CASP demo.
    ```
    cd /root/unbound/erc20/CASP-ERC20-JS-DEMO/
    ```
-   Note that these files were downloaded from the [GitHub repository](https://github.com/unbound-tech/CASP-ERC20-JS-DEMO).
+   Note that these files were downloaded from the [GitHub repository](https://github.com/unboundsecurity/unbound-sample-code/tree/main/blockchain/ethereum/erc20).
 3. **Reset** - This step cleans up any data from previously running the demo.
    ```
     ./casp reset
