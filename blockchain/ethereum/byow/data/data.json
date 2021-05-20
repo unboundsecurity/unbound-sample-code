@@ -1,0 +1,82 @@
+{
+  "caspUrl": "https://localhost",
+  "caspVersion": "1.0.2103.39392",
+  "caspRelease": 2103,
+  "demoType": "ETH_FULL",
+  "infuraToken": "1a79fe71e7ec497a9136d9caae271499",
+  "infuraUrl": "https://ropsten.infura.io/v3/1a79fe71e7ec497a9136d9caae271499",
+  "caspMngUrl": "https://localhost/casp/api/v1.0/mng",
+  "caspCredentials": {
+    "user": "so",
+    "password": "Unbound1!"
+  },
+  "activeAccount": {
+    "id": "8a8f8266-4905-4427-8b2a-e27e0cf4b742",
+    "name": "CASP",
+    "isGlobal": false,
+    "isDeletable": false,
+    "creationTime": "2021-05-12T07:05:02.334Z"
+  },
+  "activeParticipant": {
+    "id": "3dfad8c0-79b6-45a8-9c75-0435ffdf05c1",
+    "accountID": "8a8f8266-4905-4427-8b2a-e27e0cf4b742",
+    "name": "casp-bot0562129ac5f1",
+    "email": "casp-bot0562129ac5f1@casp",
+    "status": "ACTIVATED",
+    "isActive": true,
+    "accountName": "CASP",
+    "role": "",
+    "pushEnabled": false,
+    "offline": false,
+    "activeOperations": 0,
+    "deviceType": "BOT",
+    "creationTime": "2021-05-12T07:05:08.329Z",
+    "modificationTime": "2021-05-12T07:05:10.747Z"
+  },
+  "activeVault": {
+    "description": "BYOW demo",
+    "groups": [
+      {
+        "name": "Group A",
+        "members": [
+          {
+            "approvedAt": "2021-05-12T08:55:13.672Z",
+            "id": "3dfad8c0-79b6-45a8-9c75-0435ffdf05c1",
+            "isApproved": true,
+            "name": "casp-bot0562129ac5f1",
+            "status": "ACTIVATED",
+            "label": "casp-bot0562129ac5f1",
+            "isGlobal": false,
+            "isActive": true,
+            "globalStatus": "ACTIVATED",
+            "isOffline": false
+          }
+        ],
+        "requiredApprovals": 1,
+        "order": 0,
+        "deactivateAllowed": false,
+        "isOffline": false,
+        "sparePartiesLeft": 127
+      }
+    ],
+    "id": "7138d29d-c1a5-4509-8d5f-78e72c0a6ac5",
+    "name": "Demo ETH_FULL",
+    "accountID": "8a8f8266-4905-4427-8b2a-e27e0cf4b742",
+    "status": "INITIALIZED",
+    "statusText": "Ready",
+    "isActive": true,
+    "cryptoKind": "ECDSA",
+    "curveName": "secp256k1",
+    "providerKind": "ETH_BYOW",
+    "hierarchy": "BIP44",
+    "isOffline": false,
+    "approvalStructure": "QUORUM",
+    "creationTime": "2021-05-12T08:55:08.281Z",
+    "modificationTime": "2021-05-12T08:55:13.673Z"
+  },
+  "addressInfo": {
+    "keyId": "3056301006072A8648CE3D020106052B8104000A03420004F41AF7EFB0C64375F12FD0195485CEF112C842C326AD2893D9E23077924050518E4A592EE7A78AE8A1FF2C3682BE9438C537AB54FBF1D2FA05853F3BDF516CE7",
+    "publicKeyRaw": "04f41af7efb0c64375f12fd0195485cef112c842c326ad2893d9e23077924050518e4a592ee7a78ae8a1ff2c3682be9438c537ab54fbf1d2fa05853f3bdf516ce7",
+    "address": "0xF7f61aF833Aad489F4D4B50f0276d31EF4581bd3"
+  }
+}

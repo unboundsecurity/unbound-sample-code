@@ -1,0 +1,59 @@
+{
+  "caspUrl": "https://localhost",
+  "caspVersion": "1.0.2103.39392",
+  "caspRelease": 2103,
+  "demoType": "ETH_FULL",
+  "jwtToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1ZTI2N2QyMi01MTRmLTQ5NzgtYjU5Yy1hM2NhNzMwNjc3MGIiLCJicmQ6Y3QiOiJjbGkiLCJleHAiOjkyMjMzNzIwMzY4NTQ3NzUsImlhdCI6MTU4OTM2ODYyNn0.Tuy0HfU9LYUyyRrdRYgjo1d_bjqOY-ITnvyoY-3PrOYViPAjD1_w_gFih6dmfMWwEEIyRfvpdLieHZMnFziIMQ",
+  "caspMngUrl": "https://localhost/casp/api/v1.0/mng",
+  "caspCredentials": {
+    "user": "so",
+    "password": "Unbound1!"
+  },
+  "activeAccount": {
+    "id": "2b37351a-fa26-4ca0-8a79-89caebd68457",
+    "name": "CASP",
+    "isGlobal": false,
+    "isDeletable": false,
+    "creationTime": "2021-05-20T11:36:26.748Z"
+  },
+  "activeParticipant": {
+    "id": "f9a4272b-c381-4ecf-8007-cb9f8abc75c1",
+    "accountID": "2b37351a-fa26-4ca0-8a79-89caebd68457",
+    "name": "casp-bot1ee9314b4867",
+    "email": "casp-bot1ee9314b4867@casp",
+    "status": "ACTIVATED",
+    "isActive": true,
+    "accountName": "CASP",
+    "role": "",
+    "pushEnabled": false,
+    "offline": false,
+    "activeOperations": 0,
+    "deviceType": "BOT",
+    "creationTime": "2021-05-20T11:36:33.366Z",
+    "modificationTime": "2021-05-20T11:36:35.407Z"
+  },
+  "activeVault": {
+    "id": "501c3e1f-a0fc-4558-a24c-b025987f5bf5",
+    "name": "Demo ETH_FULL",
+    "description": "BYOW demo",
+    "cryptoKind": "ECDSA",
+    "providerKind": "BTC_BYOW",
+    "isActive": true,
+    "status": "INITIALIZED",
+    "statusText": "Ready",
+    "providerData": null,
+    "pendingOperations": 0,
+    "hierarchy": "BIP44",
+    "isDeletable": false,
+    "approvalStructure": "QUORUM",
+    "creationTime": "2021-05-20T11:38:33.151Z",
+    "modificationTime": "2021-05-20T11:38:42.033Z",
+    "offline": false
+  },
+  "addressInfo": {
+    "keyId": "3056301006072A8648CE3D020106052B8104000A03420004CF7FEB5F8703316AA35A6D60A89E38BDE44229F8ADED1C2650AABE00DA3E857919BC57D7B1BCBF16702D8F2662B623ED506585D3D74C040F32C62DF22BF97619",
+    "publicKeyRaw": "04cf7feb5f8703316aa35a6d60a89e38bde44229f8aded1c2650aabe00da3e857919bc57d7b1bcbf16702d8f2662b623ed506585d3d74c040f32c62df22bf97619",
+    "address": "mgswM1zGMfQKzhAHSwzGsvEEVaLqAp3ngP",
+    "balance": "50000"
+  }
+}
