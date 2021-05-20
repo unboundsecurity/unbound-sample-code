@@ -1,43 +1,8 @@
 package com.unbound.samples.encrypt;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-
-import javax.management.RuntimeErrorException;
-
 import com.dyadicsec.cryptoki.CKR_Exception;
 import com.unbound.samples.encrypt.UnboundCrypto.*;
-
-// To view UKC log run:
-//docker exec -it ukc-ep tail -f /opt/ekm/logs/ekm.log | grep test
-
-//Curl Examples:
-
-//REKEY:
-// curl 'https://localhost:8443/api/v1/keys/0x0061774aca17fec252/rekey?partitionId=casp' \
-//   -X 'POST' \
-//   -H 'Accept: application/json, text/plain, */*' \
-//   -H 'Authorization: Bearer <Enter Bearer Here>' \
-//   --insecure
-
-//DISABLE:
-
-// curl 'https://localhost:8443/api/v1/keys/0x0001e026db44370ec5/disable?partitionId=casp' \
-//   -H 'Accept: application/json' \
-//   -H 'Authorization: Bearer <Enter Bearer Here>' \
-//   -H 'Content-Type: application/json' \
-//   --insecure
-
-//REVOKE:
-
-// curl 'https://localhost:8443/api/v1/keys/0x00f1848f5f985d89fc/revoke?partitionId=casp' \
-//   -H 'Accept: application/json' \
-//   -H 'Authorization: Bearer <Enter Bearer Here>' \
-//   -H 'Content-Type: application/json' \
-//   --data-raw '{"reason":"<Enter Reason Here>","message":"<Enter Message here>"}' \
-//   --insecure
-
-
 
 public class Main {
 
@@ -60,9 +25,6 @@ public class Main {
   }
   
   public static class EncryptDemo {
-    private static final String UKC_USER_PASSWORD = "Password1!";
-    private static final String UKC_USER_NAME = "demo";
-
     private static final String NON_CACHED_KEY_LABEL  = "AES Not Cached";
     private static final String CACHED_KEY_LABEL = "AES Cached";
 
@@ -81,7 +43,9 @@ public class Main {
     
     public void init() throws CKR_Exception {
       ukc = new UnboundCrypto();
-      ukc.login("encrypter","Password1!");
+      final String ukcCryptoUserName = System.getenv("UKC_CRYPTO_USER");
+      final String ukcCryptoUserPassword = System.getenv("UKC_CRYPTO_USER_PASSWORD");
+      ukc.login(ukcCryptoUserName, ukcCryptoUserPassword);
 
       nonCachedKey = ukc.findKeyByLabel(NON_CACHED_KEY_LABEL);
       if(nonCachedKey == null) {
@@ -195,8 +159,11 @@ public class Main {
       print("To conclude we will demonstrate recovery by decrypting all records.");
       print("Each record is decrypted with the key that was used for its encryption.");
       for (EncryptedData encryptedData : encryptedRecords) {
-        byte[] encrypted = encryptedData.key.decrypt(encryptedData);
-        print("Decrypted with " + encryptedData.key.uid + ": " + new String(encrypted));
+        String keyUid = encryptedData.key.uid;
+        // to simulate real life use-case we fetch the key from UKC
+        AesKey keyFromUkc = ukc.findKeyByUid(keyUid);
+        byte[] encrypted = keyFromUkc.decrypt(encryptedData);
+        print("Decrypted with " + keyUid + ": " + new String(encrypted));
       }
 
       print("\nScroll through the lines above to verify the decryption was done properly.");

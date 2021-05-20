@@ -1,4 +1,5 @@
 package com.unbound.samples.encrypt;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 
 import com.dyadicsec.cryptoki.*;
@@ -52,7 +53,6 @@ public class UnboundCrypto {
       public String getKeyDataStr() {
         return "\n>> Key label: '" + label +"', uid:" + uid;
       }
-
       
     }
     
@@ -85,6 +85,20 @@ public class UnboundCrypto {
         new CK_ATTRIBUTE[]
           {
             new CK_ATTRIBUTE(CK.CKA_ID, Charset.forName("UTF-8").encode(label).array())
+          }
+      );
+      int[] handles = Library.C_FindObjects(session, 1);
+      Library.C_FindObjectsFinal(session);
+      if(handles.length < 1) return null;
+      return getAttributesByHandle(handles[0]);
+    }
+
+    public AesKey findKeyByUid(String uid) throws CKR_Exception {
+      long nativeUid = new BigInteger(uid, 16).longValue();
+      Library.C_FindObjectsInit(session, 
+        new CK_ATTRIBUTE[]
+          {
+            new CK_ATTRIBUTE(CK.DYCKA_UID, nativeUid)
           }
       );
       int[] handles = Library.C_FindObjects(session, 1);
