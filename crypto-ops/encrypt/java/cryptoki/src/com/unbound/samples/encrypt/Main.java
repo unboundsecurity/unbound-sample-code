@@ -140,7 +140,8 @@ public class Main {
 
       printHeader("Before we start");
       print("During the demo its recommended to display the log of the UKC EP server.");
-      print("To open show the log run this command on the EP:");
+      print("This will help you understand exactly what's happenning.");
+      print("To show the log run this command on the EP server:");
       print("    sudo tail -f /opt/ekm/logs/ekm.log");
       pressAnyKeyToContinue();
 
@@ -151,7 +152,7 @@ public class Main {
       
       // Encryption using MPC with non cached key
       printHeader("Encryption with MPC (non-cached)");
-      print("First we will encrypt with with the NON-CACHED key. " + nonCachedKey.getKeyDataStr());
+      print("First we will encrypt with with the NON-CACHED key." + nonCachedKey.getKeyDataStr());
       print("Looking at the log you should notice " + encryptIterationCount + " ENCRYPT entries.");
       print("This indicates that the encryption was done using MPC on the server side.");
       pressAnyKeyToContinue();
@@ -160,7 +161,7 @@ public class Main {
 
       // Encryption on client with cached key
       printHeader("Encryption on client (cached)");
-      print("Now lets do the same encyrption with the CACHED key. " + cachedKey.getKeyDataStr());
+      print("Now lets do the same encyrption with the CACHED key." + cachedKey.getKeyDataStr());
       print("Looking at the log you should notice no new ENCRYPT entries.");
       print("Instead, you should see only one GET entry.");
       print("This indicates that the client fetched the key material and did all the encryption on the client machine.");
@@ -172,12 +173,18 @@ public class Main {
       // key rotation
       printHeader("Key rotation");
       print("Now lets see what happens on key rotation.");
-      print("Notice the key UID before rotation: " + cachedKey.getKeyDataStr());
+      print("Notice the key UID before rotation:" + cachedKey.getKeyDataStr());
       print("Please manually rotate the key named '" + cachedKey.label + "' by using UKC UI 'Rekey' operation.");
+      String uidBefore = cachedKey.uid;
       pressAnyKeyToContinue();
       print("We now fetch the key again");
       cachedKey = ukc.findKeyByLabel(CACHED_KEY_LABEL);
-      print("Notice the key UID AFTER rotation has changed: " + cachedKey.getKeyDataStr());
+      while(cachedKey.uid.equals(uidBefore)) {
+        print("Looks like the key was not rotated. Please try again...");
+        pressAnyKeyToContinue();
+        cachedKey = ukc.findKeyByLabel(CACHED_KEY_LABEL);
+      }
+      print("Notice the key UID AFTER rotation has changed:" + cachedKey.getKeyDataStr());
       print("Lets now do encryption again using the new CACHED key.");
       pressAnyKeyToContinue();
       testEncrypt(cachedKey);
@@ -192,10 +199,10 @@ public class Main {
         print("Decrypted with " + encryptedData.key.uid + ": " + new String(encrypted));
       }
 
-      print("/nNow you can scroll throught the lines above to verify the decryption was done properly.");
+      print("\nScroll through the lines above to verify the decryption was done properly.");
       pressAnyKeyToContinue();
 
-      print("Thats it... Thank you and Goodbye.");
+      printHeader("Thats it... Thank you and Goodbye.");
       
       destroy();
 

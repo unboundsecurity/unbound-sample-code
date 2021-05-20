@@ -50,7 +50,7 @@ public class UnboundCrypto {
       }
 
       public String getKeyDataStr() {
-        return "Key label: '" + label +"', uid:" + uid;
+        return "\n>> Key label: '" + label +"', uid:" + uid;
       }
 
       
