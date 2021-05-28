@@ -15,12 +15,12 @@ until $(curl --output /dev/null -k --silent --head --fail \
     sleep 5
 done
 
-echo "Waiting for partition '${UKC_PARTITION}' 'so' password reset"
-until $(curl --output /dev/null --silent -k --fail --compressed \
-  --user "so@$UKC_PARTITION:$UKC_PASSWORD" \
-  "https://${EP_HOST_NAME}/api/v1/info?partitionId=$UKC_PARTITION" ); do
-    printf '.'
-    sleep 5
-done
+# echo "Waiting for partition '${UKC_PARTITION}' 'so' password reset"
+# until $(curl --output /dev/null --silent -k --fail --compressed \
+#   --user "so@$UKC_PARTITION:$UKC_PASSWORD" \
+#   "https://${EP_HOST_NAME}/api/v1/info?partitionId=$UKC_PARTITION" ); do
+#     printf '.'
+#     sleep 5
+# done
 
 echo "UKC Ready"
