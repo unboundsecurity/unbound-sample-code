@@ -14,11 +14,11 @@ This demo shows how to use Unbound technology with Java for performing high thro
 1. Click *Login*.
 1. Select the *Clients* tab.
 1. Click *Create* to create a new client.
-    a. In the *Client name* field enter: "template_1".
-    a. In the *Registration mode* field select "Ephemeral client template".
-    a. Change the *Activation code validity period in minutes* to "20000".
-    a. Click *Add ephemeral client template*.
-    a. A dialog with the activation code appears. **Copy the activation code**.
+    1. In the *Client name* field enter: "template_1".
+    1. In the *Registration mode* field select "Ephemeral client template".
+    1. Change the *Activation code validity period in minutes* to "20000".
+    1. Click *Add ephemeral client template*.
+    1. A dialog with the activation code appears. **Copy the activation code**.
 
 ### Build and run the demo
 1. Clone this repository to your computer:   
@@ -40,12 +40,9 @@ This demo shows how to use Unbound technology with Java for performing high thro
    
    A docker image named `unboundukc/ukc-client:demo-java-encrypt` should be built.
 1. During the demo it is recommended to look at the UKC log to better understand what is happening.
-
-    a. To show the UKC log, browse to "http://localhost:8081/logs".
-    
-    b. Alternatively, you can show the log by opening a terminal and running:
-    
-    `docker exec -it ukc-ep-vhsm tail -f /opt/ekm/logs/ekm.log`
+    1. To show the UKC log, browse to "http://localhost:8081/logs".
+    1. Alternatively, you can show the log by opening a terminal and running: 
+        `docker exec -it ukc-ep-vhsm tail -f /opt/ekm/logs/ekm.log`
 1. Start the demo by running  
    `./run.sh`
 1. Follow the instructions on the screen.
