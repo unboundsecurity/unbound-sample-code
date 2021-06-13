@@ -8,10 +8,11 @@ const util = require('./util');
 const Promise = require('bluebird');
 const rlp = require('rlp');
 const bitcore = require('bitcore-lib');
-const { default: axios } = require('axios');
+const axios = require('axios');
 const bitcoinjs = require('bitcoinjs-lib');
+const { bitcoin } = require('bitcoinjs-lib/src/networks');
 const BufferUtil = bitcore.util.buffer;
-
+const network = bitcoinjs.networks.testnet;
 
 
 /**
@@ -109,11 +110,10 @@ async function getPublicKeyFromCasp(options) {
  */
 async function createAddress(options) {
   var publicKeyInfo = await getPublicKeyFromCasp(options);
-
-  let publicKey = bitcore.PublicKey(publicKeyInfo.publicKeyRaw,{network:'testnet'});
-
+  
+  let ecpair = bitcoinjs.ECPair.fromPublicKey(Buffer.from(publicKeyInfo.publicKeyRaw, 'hex'), { network: network });
   // convert to Bitcoin address
-  var address = publicKey.toAddress('testnet').toString();
+  let address = bitcoinjs.address.toBase58Check(bitcoinjs.crypto.hash160(ecpair.publicKey),network.pubKeyHash);
 
   util.log(`Generated address: ${address}`)
   return { ...publicKeyInfo, address: address };
@@ -228,68 +228,64 @@ async function getTransactions(address, jwtToken) {
  */
 async function createTransaction(options) {
 
-  const transaction = new bitcore.Transaction();
+  const psbt = new bitcoinjs.Psbt({ network: network });
   const address = options.addressInfo.address;
 
   let to = (await inquirer.prompt([{
     name: 'to', validate: util.required('To address'),
     message: 'To address: '
   }]));
-  let fee = 0;
-  let inputCount = 0;
-  let outputCount = 2;
 
-  const utxos = await axios.get(
-    `https://sochain.com/api/v2/get_tx_unspent/BTCTEST/${address}`
-  );
+  const utxos = (await request('transactions', 'get', [
+    { option: 'include_raw', value: 'true' },
+    { option: 'address', value: address }
+  ], undefined, options.jwtToken)).data._embedded.transactions;
+
+  let inputIndex = 0;
+
+  utxos.forEach(element => {
+
+    // Finds all of the inputs for the transaction
+    const transfers = element._embedded.transfers.reduce((a, b) => a.concat(b), []);
+    const inputs = transfers.filter(t => t.to_address === address);
+    for (let index = 0; index < inputs.length; index++) {
+      const input = inputs[index];
+
+      psbt.addInput({
+        hash: element.identifier,
+        index: inputIndex,
+        // VERY IMPORTANT
+        nonWitnessUtxo: Buffer.from(
+          element.raw,
+          'base64',
+        ),
+      });
+      inputIndex++;
+    }
+  });
 
   var amount = options.addressInfo.balance;
 
-  let inputs = [];
-  utxos.data.data.txs.forEach(async (element) => {
-    let utxo = {};
+  // How we send to
+  psbt.addOutput({
+    address: to.to,
+    value: amount - 1000,
+  })
 
-    utxo.satoshis = Math.floor(Number(element.value) * 100000000);
-    utxo.script = element.script_hex;
-    utxo.address = utxos.data.data.address;
-    utxo.txId = element.txid;
-    utxo.outputIndex = element.output_no;
-
-    inputCount += 1;
-    inputs.push(utxo);
-  });
-
-  let transactionSize = inputCount * 180 + outputCount * 34 + 10 - inputCount;
-
-  fee = transactionSize * 20;
-
-  //Set transaction input
-  transaction.from(inputs);
-
-  // set the recieving address and the amount to send
-  transaction.to(to.to, +amount - fee);
-
-  // Set change address - Address to receive the left over funds after transfer
-  transaction.change(to.to);
-
-  //manually set transaction fees: 20 satoshis per byte
-  transaction.fee(fee);
-
-  let serializedTransaction = transaction.serialize({ disableIsFullySigned: true });
 
   const vaultId = options.activeVault.id;
 
   util.showSpinner('Requesting signature from CASP');
   var signRequest = {
     dataToSign: [
-      serializedTransaction
+      psbt.toHex()
     ],
     publicKeys: [
       options.addressInfo.keyId
     ],
     description: 'Test transaction BTCTEST',
     // the details are shown to the user when requesting approval
-    details: JSON.stringify(transaction, undefined, 2),
+    details: JSON.stringify(psbt, undefined, 2),
     // callbackUrl: can be used to receive notifictaion when the sign operation
     // is approved
   };
@@ -309,50 +305,68 @@ async function createTransaction(options) {
   util.hideSpinner();
   util.log(`Signature created: ${signOp.signatures[0]}`)
 
-  var signature = signOp.signatures[0];
+  let signature = signOp.signatures[0];
+  
 
-//  let signedHex = signTransaction(serializedTransaction, signature, options.addressInfo.publicKeyRaw);
+  if (signOp.isApproved) {
+    
+    psbt.input
+    psbt.signAllInputsHD(bitcoinjs.bip32.fromBase58(signature,net));
+    psbt.finalizeAllInputs();
+    
+    let transaction = psbt.extractTransaction();
 
-//   return signedHex;
+    return transaction.toHex();
+  }
+  else {
+    throw Error("Vault participant didn't sign transactions")
+  }
 
-  var r  = new Buffer.from(signature.slice(0, 64).toLowerCase(), 'hex');
-  var s = new Buffer.from(signature.slice(64).toLowerCase(), 'hex');
+  // transaction.addInput
 
-  let rBN = new bitcore.crypto.BN(r);
-  let sBN = new bitcore.crypto.BN(s);
+  //  let signedHex = signTransaction(serializedTransaction, signature, options.addressInfo.publicKeyRaw);
 
-  let lastInput= inputs[inputs.length-1];
-  let lastOutput= transaction.outputs[0];
+  //   return signedHex;
 
-  let builtSignature = new bitcore.Transaction.Signature( {signature: new bitcore.crypto.Signature(rBN,sBN),
-    prevTxId:lastInput.txId,
-    outputIndex: 0,
-    inputIndex: inputs.length-1,
-    sigtype: bitcore.crypto.Signature.SIGHASH_ALL,
-    publicKey: new bitcore.PublicKey(options.addressInfo.publicKeyRaw,{network:'testnet'})
-  });
+  // var r = new Buffer.from(signature.slice(0, 64).toLowerCase(), 'hex');
+  // var s = new Buffer.from(signature.slice(64).toLowerCase(), 'hex');
 
-  //transaction.applySignature(builtSignature,"ecdsa");
+  // let rBN = new bitcore.crypto.BN(r);
+  // let sBN = new bitcore.crypto.BN(s);
 
-  let inputToSign = transaction.inputs[inputs.length-1];
+  // let lastInput = inputs[inputs.length - 1];
+  // let lastOutput = transaction.outputs[0];
 
-  if (inputToSign.output.script.isWitnessPublicKeyHashOut() || inputToSign.output.script.isScriptHashOut()) {
-    inputToSign.setWitnesses([
-      BufferUtil.concat([
-        builtSignature.signature.toDER(),
-        BufferUtil.integerAsSingleByteBuffer(builtSignature.sigtype)
-      ]),
-      builtSignature.publicKey.toBuffer()
-    ]);
-  } else {
-    inputToSign.setScript(bitcore.Script.buildPublicKeyHashIn(
-      builtSignature.publicKey,
-      builtSignature.signature.toDER(),
-      builtSignature.sigtype
-    ));
-  }//tb1q7q3h9726tes70cqvx6hgu2dj3z9mgx3c473ndw
+  // let builtSignature = new bitcore.Transaction.Signature({
+  //   signature: new bitcore.crypto.Signature(rBN, sBN),
+  //   prevTxId: lastInput.txId,
+  //   outputIndex: 0,
+  //   inputIndex: inputs.length - 1,
+  //   sigtype: bitcore.crypto.Signature.SIGHASH_ALL,
+  //   publicKey: new bitcore.PublicKey(options.addressInfo.publicKeyRaw, { network: 'testnet' })
+  // });
 
-  return transaction.serialize();
+  // //transaction.applySignature(builtSignature,"ecdsa");
+
+  // let inputToSign = transaction.inputs[inputs.length - 1];
+
+  // if (inputToSign.output.script.isWitnessPublicKeyHashOut() || inputToSign.output.script.isScriptHashOut()) {
+  //   inputToSign.setWitnesses([
+  //     BufferUtil.concat([
+  //       builtSignature.signature.toDER(),
+  //       BufferUtil.integerAsSingleByteBuffer(builtSignature.sigtype)
+  //     ]),
+  //     builtSignature.publicKey.toBuffer()
+  //   ]);
+  // } else {
+  //   inputToSign.setScript(bitcore.Script.buildPublicKeyHashIn(
+  //     builtSignature.publicKey,
+  //     builtSignature.signature.toDER(),
+  //     builtSignature.sigtype
+  //   ));
+  // }//tb1q7q3h9726tes70cqvx6hgu2dj3z9mgx3c473ndw
+
+  // return transaction.serialize();
 
   // console.log(signature);
   // console.log(new bitcore.Transaction(signature));
@@ -365,11 +379,11 @@ function signTransaction(txHex, signature, publicKeyRaw) {
   const transaction = bitcoinjs.Transaction.fromHex(txHex);
 
   const encodedSignature = bitcoinjs.script.signature.encode(Buffer.from(signature, 'hex'), bitcoinjs.Transaction.SIGHASH_ALL);
-  const publicKey = bitcoinjs.ECPair.fromPublicKey(Buffer.from(publicKeyRaw, 'hex'), bitcoinjs.networks.testnet).publicKey;
+  const publicKey = bitcoinjs.ECPair.fromPublicKey(Buffer.from(publicKeyRaw, 'hex'), network).publicKey;
   const scriptSig = bitcoinjs.payments.p2pkh({
     signature: encodedSignature,
     pubkey: publicKey,
-    network: bitcoinjs.networks.testnet
+    network: network
   });
   transaction.setInputScript(0, scriptSig.input);
 
@@ -486,40 +500,48 @@ async function signTransactionOld(options) {
  */
 async function sendTransaction(options) {
 
-  // const result = await axios({
-  //   method: "POST",
-  //   url: `https://sochain.com/api/v2/send_tx/BTCTEST`,
-  //   data: {
-  //     tx_hex: options.pendingTransaction,
-  //   },
-  // });
-  // console.log(result.data.data);
-  // return result.data.data;
+  const hex = endTrans.toHex(options.pendingTransaction);
+  const transaction = bitcoinjs.Transaction.fromHex(hex);
+  const hash = transaction.getHash().toString('hex');
 
-    let url = `https://api.blockset.com/transactions`;
-    const serializedRequest = options.pendingTransaction;
 
-    const data = Buffer.from(serializedRequest, 'hex').toString('base64');
-    const hash = bitcoinjs.Transaction.fromHex(serializedRequest).getHash().toString('hex');;
+  const data = Buffer.from(hex, 'hex').toString('base64');
 
-    util.showSpinner('Sending signed transaction to ledger');
-    var res = await axios({
-      method: 'post',
-      url: url,
-      data: {
-        data: data,
-        blockchain_id: 'bitcoin-testnet',
-        transaction_id: `bitcoin-testnet:${hash}`
-    },
-      headers: {
-          Authorization: `Bearer ${options.jwtToken}`
-      }
-  });
-    util.hideSpinner();
-    util.log(`Transaction sent successfully, txHash is: ${res.transactionHash}`);
-    // console.log(res.data);
-    return res.transactionHash;
+  util.showSpinner('Sending signed transaction to ledger');
+
+  // Does the actual transaction
+  let postResult = await request('transactions', 'post', null, {
+    data: data,
+    blockchain_id: 'bitcoin-testnet',
+    transaction_id: `bitcoin-testnet:${hash}`
+  },
+    options.jwtToken);
+
+  util.hideSpinner();
+  util.log(`Transaction sent successfully, txHash is: ${postResult.transactionHash}`);
+  // console.log(res.data);
+  return postResult.transactionHash;
 }
+
+async function request(endpoint, method, options, data, clientJwtToken) {
+  let url = `https://api.blockset.com/${endpoint}?blockchain_id=bitcoin-testnet`;
+  if (options) {
+    url = url.concat(options.reduce(
+      (total, curr) => {
+        return `${total}&${curr.option}=${escape(curr.value)}`;
+      }, ''));
+  }
+
+  return axios({
+    method,
+    url,
+    data,
+    headers: {
+      Authorization: `Bearer ${clientJwtToken}`
+    }
+  });
+}
+
 
 module.exports = {
   createAddress,

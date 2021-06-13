@@ -65,7 +65,7 @@ async function test() {
         break;
 
       // full cycle of deposit, signature and withdrawal for Ethereum BYOW
-      case 'ETH_FULL':
+      case 'BTCTEST_FULL':
         var vaults = require('./vaults');
         var activeVault = await vaults.selectActiveVault(appData);
         save({ activeVault });
@@ -142,11 +142,11 @@ async function init() {
   var demoType = appData.demoType = appData.demoType || (await inquirer.prompt([
     {
       name: "demoType", message: "Select demo to run: ",
-      default: 'ETH_FULL',
+      default: 'BTCTEST_FULL',
       type: "list", choices: [
         {
           name: 'BYOW full cycle with Ethereum deposit and withdrawal',
-          value: 'ETH_FULL'
+          value: 'BTCTEST_FULL'
         },
         {
           name: 'Public key generation only',
@@ -159,27 +159,27 @@ async function init() {
       ]
     }
   ])).demoType;
-  if (demoType === 'ETH_FULL') {
+  if (demoType === 'BTCTEST_FULL') {
     
-    //   let jwtToken = appData.jwtToken || (await inquirer.prompt([{
-    //     name: 'token', message: `Blockset JWT token: `,
-    //     validate: util.required('Blockset token')
-    //   }])).token;
+      let jwtToken = appData.jwtToken || (await inquirer.prompt([{
+        name: 'token', message: `Blockset JWT token: `,
+        validate: util.required('Blockset token')
+      }])).token;
       
-    //   try {
-    //     util.showSpinner('Checking blockset health')
-    //     let net = await axios({
-    //       method: 'get', url: 'https://api.blockset.com/blocks?max_page_size=5&blockchain_id=bitcoin-testnet',
-    //       headers: { Authorization: `Bearer ${jwtToken}` }
-    //     });
-    //     util.hideSpinner();
-    //     util.log(`Connection Healthy!`);
-    //   } catch (e) {
-    //     util.hideSpinner();
-    //     util.log(`Could not connect, please try again: ${e.message}`);
-    //   }
+      try {
+        util.showSpinner('Checking blockset health')
+        let net = await axios({
+          method: 'get', url: 'https://api.blockset.com/blocks?max_page_size=5&blockchain_id=bitcoin-testnet',
+          headers: { Authorization: `Bearer ${jwtToken}` }
+        });
+        util.hideSpinner();
+        util.log(`Connection Healthy!`);
+      } catch (e) {
+        util.hideSpinner();
+        util.log(`Could not connect, please try again: ${e.message}`);
+      }
     
-     appData.jwtToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1ZTI2N2QyMi01MTRmLTQ5NzgtYjU5Yy1hM2NhNzMwNjc3MGIiLCJicmQ6Y3QiOiJjbGkiLCJleHAiOjkyMjMzNzIwMzY4NTQ3NzUsImlhdCI6MTU4OTM2ODYyNn0.Tuy0HfU9LYUyyRrdRYgjo1d_bjqOY-ITnvyoY-3PrOYViPAjD1_w_gFih6dmfMWwEEIyRfvpdLieHZMnFziIMQ";
+     appData.jwtToken = jwtToken;
   }
   save();
   return appData;

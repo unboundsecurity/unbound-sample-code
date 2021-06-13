@@ -102,7 +102,7 @@ async function createVault(options) {
           when: options.demoType === 'GEN_PUB_KEY'}, // For eth demo only ECDSA is supported
       {name: 'coinType', message: "Coin type: ", default: BTC_COIN_TYPE,
           validate: util.required("Coin type")},
-      {name: 'providerKind', message: "Provider kind: ", default: 'BTC_BYOW',
+      {name: 'providerKind', message: "Provider kind: ", default: 'BTCTEST',
           validate: util.required("Provider kind")}
 
     ]);
