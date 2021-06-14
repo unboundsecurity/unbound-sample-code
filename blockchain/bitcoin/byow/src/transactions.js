@@ -241,7 +241,6 @@ async function createTransaction(options) {
     { option: 'address', value: address }
   ], undefined, options.jwtToken)).data._embedded.transactions;
 
-  let inputIndex = 0;
 
   utxos.forEach(element => {
 
@@ -253,14 +252,17 @@ async function createTransaction(options) {
 
       psbt.addInput({
         hash: element.identifier,
-        index: inputIndex,
+        index: Number(input.meta.n === undefined ? input.meta.vout : input.meta.n),
         // VERY IMPORTANT
         nonWitnessUtxo: Buffer.from(
           element.raw,
           'base64',
         ),
+        // witnessUtxo: {
+        //   script: Buffer.from(input.meta["scriptPubKey.hex"],'hex'),
+        //   value: Number(input.amount.amount)
+        // }
       });
-      inputIndex++;
     }
   });
 
@@ -310,11 +312,31 @@ async function createTransaction(options) {
 
   if (signOp.isApproved) {
     
-    psbt.input
-    psbt.signAllInputsHD(bitcoinjs.bip32.fromBase58(signature,net));
+    const publicKey = bitcoinjs.ECPair.fromPublicKey(Buffer.from(options.addressInfo.publicKeyRaw, 'hex'), network).publicKey;
+    const encodedSignature = bitcoinjs.script.signature.encode(Buffer.from(signature, 'hex'), bitcoinjs.Transaction.SIGHASH_ALL);
+    for (let index = 0; index < psbt.inputCount; index++) {
+      psbt.updateInput(index, {
+        partialSig: [
+          {
+            pubkey: publicKey,
+            signature: encodedSignature,
+          }
+        ]
+      });
+      
+    }
+    
     psbt.finalizeAllInputs();
     
     let transaction = psbt.extractTransaction();
+
+    const scriptSig = bitcoinjs.payments.p2wpkh({
+      signature: encodedSignature,
+      pubkey: publicKey,
+      network: network
+  });
+  transaction.setWitness(0, scriptSig.witness);
+  
 
     return transaction.toHex();
   }
@@ -392,115 +414,13 @@ function signTransaction(txHex, signature, publicKeyRaw) {
 }
 
 /**
- * Sign a transaction with CASP
- * @param  {Object} options
- * @param  {string} options.caspMngUrl - The URL for CASP management API
- * @param  {string} options.infuraUrl - URL for Infura ledger server
- * @param  {Object} options.activeVault - Details of the CASP vault to use for signature
- * @param  {Object} options.addressInfo - Information of the address that is the
- *                  source(from) of the transaction (address, publicKeyDER )
- * @param  {bitcore.Transaction} options.pendingTransaction - Details of the transaction to sign,
- *                  including: hashToSign and txData
- * @return {Object} Signature data with:
- *                  signOperation - details of the CASP signature quorum operation
- *                  serializedSignedTransaction - serialized signed transaction that can be sent to the ledger
- */
-async function signTransactionOld(options) {
-  var web3 = new Web3(options.infuraUrl);
-  const vaultId = options.activeVault.id;
-  var pendingTransaction = options.pendingTransaction;
-  util.showSpinner('Requesting signature from CASP');
-  var signRequest = {
-    dataToSign: [
-      pendingTransaction.hashToSign
-    ],
-    publicKeys: [
-      options.addressInfo.keyId
-    ],
-    description: 'Test transaction Eth',
-    // the details are shown to the user when requesting approval
-    details: JSON.stringify(pendingTransaction, undefined, 2),
-    // callbackUrl: can be used to receive notifictaion when the sign operation
-    // is approved
-  };
-
-  // casp added support for eth rawTransaction verification
-  var useRawTransaction = options.caspRelease >= 1812;
-  if (useRawTransaction) {
-    signRequest.rawTransactions = [
-      pendingTransaction.rawTransaction
-    ];
-    signRequest.ledgerHashAlgorithm = 'SHA3_256';
-  }
-
-  try {
-    var quorumRequestOpId = (await util.superagent.post(`${options.caspMngUrl}/vaults/${vaultId}/sign`)
-      .send(signRequest)).body.operationID;
-    util.hideSpinner();
-    util.log('Signature process started, signature must be approved by vault participant');
-    util.log(`To approve with bot, run: 'java -Djava.library.path=. -jar BotSigner.jar -u http://localhost/casp -p ${options.activeParticipant.id} -w 1234567890'`);
-    util.showSpinner('Waiting for signature quorum approval');
-    var signOp;
-    do {
-      signOp = (await util.superagent.get(`${options.caspMngUrl}/operations/sign/${quorumRequestOpId}`))
-        .body;
-      await Promise.delay(500);
-    } while (signOp.status !== 'COMPLETED'); //
-    util.hideSpinner();
-    util.log(`Signature created: ${signOp.signatures[0]}`)
-
-    var signature = signOp.signatures[0];
-    var v = signOp.v[0];
-    // workaround for CASP pre-November bug
-    // starting CASP 11-2018 v is returned as 0 or 1
-    if (v === 27) v = 1;
-    if (v === 28) v = 0;
-    var tx = new EthereumTx(pendingTransaction.txData);
-    var r = tx.r = new Buffer.from(signature.slice(0, 64).toLowerCase(), 'hex');
-    var s = tx.s = new Buffer.from(signature.slice(64).toLowerCase(), 'hex');
-    // According to https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
-    var v = tx.v = chainId * 2 + v + 35;
-    // validate that the from address decoded from signature is our address
-    var fromAddress = pendingTransaction.txData.from;
-
-    // verify signature by recovering the public-key/address and comparing against
-    // our original 'from' address
-    try {
-      var recoveredPublicKey = EthUtil.ecrecover(new Buffer.from(pendingTransaction.hashToSign, 'hex'), v, r, s, chainId).toString('hex');
-      var recoveredAddress = addressFromPublicKey(recoveredPublicKey);
-      if (fromAddress.toLowerCase() !== recoveredAddress.toLowerCase()) {
-        throw `Invalid recovered address: ${fromAddress.toLowerCase()} <> ${recoveredAddress.toLowerCase()}`;
-      }
-      util.log(`Signature verified successfully`);
-    } catch (e) {
-      util.log('Signature verification failed');
-      throw e;
-    }
-
-    // another method for verification which interanlly runs similar code to the
-    // one above
-    if (tx.from.toString('hex').toLowerCase() !== fromAddress.toLowerCase().slice(2)) {
-      throw new Error("Failed to sign transaction, invalid v value");
-    }
-    return {
-      signOperation: signOp,
-      serializedSignedTransaction: '0x' + tx.serialize().toString('hex')
-    }
-  } catch (e) {
-    util.log(e);
-    util.hideSpinner();
-    util.logError(e);
-  }
-}
-
-/**
  * Sends a signed transaction to Infura ledger
  * @param  {Object} options
  * @return {string} transaction hash of the sent transaction
  */
 async function sendTransaction(options) {
 
-  const hex = endTrans.toHex(options.pendingTransaction);
+  const hex = options.pendingTransaction;
   const transaction = bitcoinjs.Transaction.fromHex(hex);
   const hash = transaction.getHash().toString('hex');
 
