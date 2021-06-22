@@ -10,7 +10,6 @@ const rlp = require('rlp');
 const bitcore = require('bitcore-lib');
 const axios = require('axios');
 const bitcoinjs = require('bitcoinjs-lib');
-const { bitcoin } = require('bitcoinjs-lib/src/networks');
 const BufferUtil = bitcore.util.buffer;
 const network = bitcoinjs.networks.testnet;
 
@@ -110,10 +109,10 @@ async function getPublicKeyFromCasp(options) {
  */
 async function createAddress(options) {
   var publicKeyInfo = await getPublicKeyFromCasp(options);
-  
+
   let ecpair = bitcoinjs.ECPair.fromPublicKey(Buffer.from(publicKeyInfo.publicKeyRaw, 'hex'), { network: network });
   // convert to Bitcoin address
-  let address = bitcoinjs.address.toBase58Check(bitcoinjs.crypto.hash160(ecpair.publicKey),network.pubKeyHash);
+  let address = bitcoinjs.address.toBase58Check(bitcoinjs.crypto.hash160(ecpair.publicKey), network.pubKeyHash);
 
   util.log(`Generated address: ${address}`)
   return { ...publicKeyInfo, address: address };
@@ -266,21 +265,31 @@ async function createTransaction(options) {
     }
   });
 
-  var amount = options.addressInfo.balance;
 
-  // How we send to
+  const amount = Number(options.addressInfo.balance);
+
+  // Who we send to
   psbt.addOutput({
     address: to.to,
-    value: amount - 1000,
+    value: amount/2 ,
   })
 
 
   const vaultId = options.activeVault.id;
+  // "cc13679623048ed31168c2777bd42af386abd670a8c1b8c949041a649dc14512"
+  const c = psbt.__CACHE;
+  // if (!disableFeeCheck) {
+    // psbt.checkFees(psbt, c, psbt.opts);
+  // }
 
+  let tx;
+
+  tx = c.__TX.clone();
+  //psbt.inputFinalizeGetAmts(psbt.data.inputs, tx, c, true);
   util.showSpinner('Requesting signature from CASP');
   var signRequest = {
     dataToSign: [
-      psbt.toHex()
+      tx.toHex()
     ],
     publicKeys: [
       options.addressInfo.keyId
@@ -290,10 +299,54 @@ async function createTransaction(options) {
     details: JSON.stringify(psbt, undefined, 2),
     // callbackUrl: can be used to receive notifictaion when the sign operation
     // is approved
+
   };
 
+  let providerData = {
+    request: {
+      amount: (amount) / 200000000,
+      asset: "BTC",
+      recipientAddress: to.to,
+      fee: '1m',
+      description: "payback",
+      coin: 1,
+      account: 0
+    },
+    txs: [
+      {
+        serialized: tx.toHex(),
+      },
+    ],
+    recipients: [
+      {
+        address: to.to,
+        asset: "BTC",
+        amount: amount-1000,
+      },
+    ],
+    cryptoKind: "ECDSA",
+  };
+
+let data = {
+  description: 'BYOW',
+  dataToSign: [
+    tx.getHash().toString('hex'),
+  ],
+  publicKeys: [
+    options.addressInfo.keyId,
+  ],
+  ledgerHashAlgorithm: "DOUBLE_SHA256",
+  // callbackUrl: "http://localhost:3000/api/v1.0/sign_complete_callback?ledgerId=BTCTEST",
+  ledger: "BTCTEST",
+  rawTransactions: [
+    tx.toHex(),
+  ],
+  providerData: JSON.stringify(providerData)
+};
+
+
   var quorumRequestOpId = (await util.superagent.post(`${options.caspMngUrl}/vaults/${vaultId}/sign`)
-    .send(signRequest)).body.operationID;
+    .send(/*signRequest*/data)).body.operationID;
   util.hideSpinner();
   util.log('Signature process started, signature must be approved by vault participant');
   util.log(`To approve with bot, run: 'java -Djava.library.path=. -jar BotSigner.jar -u http://localhost/casp -p ${options.activeParticipant.id} -w 1234567890'`);
@@ -304,14 +357,15 @@ async function createTransaction(options) {
       .body;
     await Promise.delay(1000);
   } while (signOp.status !== 'COMPLETED'); //
+
+
   util.hideSpinner();
-  util.log(`Signature created: ${signOp.signatures[0]}`)
 
   let signature = signOp.signatures[0];
-  
+
+  util.log(`Signature created: ${signature}`)
 
   if (signOp.isApproved) {
-    
     const publicKey = bitcoinjs.ECPair.fromPublicKey(Buffer.from(options.addressInfo.publicKeyRaw, 'hex'), network).publicKey;
     const encodedSignature = bitcoinjs.script.signature.encode(Buffer.from(signature, 'hex'), bitcoinjs.Transaction.SIGHASH_ALL);
     for (let index = 0; index < psbt.inputCount; index++) {
@@ -323,78 +377,29 @@ async function createTransaction(options) {
           }
         ]
       });
-      
+
     }
-    
+
+
+    psbt.validateSignaturesOfInput(0);
     psbt.finalizeAllInputs();
-    
-    let transaction = psbt.extractTransaction();
 
-    const scriptSig = bitcoinjs.payments.p2wpkh({
-      signature: encodedSignature,
-      pubkey: publicKey,
-      network: network
-  });
-  transaction.setWitness(0, scriptSig.witness);
-  
+    let psbtTrans = psbt.extractTransaction();
 
-    return transaction.toHex();
+    // let transaction = psbt.extractTransaction();
+    // transaction.setInputScript(0,publicKey);
+
+    // new bitcore.Transaction(tx.toHex()).verify()
+
+    // return transaction.toHex();
+    // "c42058735c1a6465d734d2af387b0b2ba2f29719d47aa424e23397043bc64a41"
+    return psbtTrans.toHex();
+
   }
   else {
     throw Error("Vault participant didn't sign transactions")
   }
 
-  // transaction.addInput
-
-  //  let signedHex = signTransaction(serializedTransaction, signature, options.addressInfo.publicKeyRaw);
-
-  //   return signedHex;
-
-  // var r = new Buffer.from(signature.slice(0, 64).toLowerCase(), 'hex');
-  // var s = new Buffer.from(signature.slice(64).toLowerCase(), 'hex');
-
-  // let rBN = new bitcore.crypto.BN(r);
-  // let sBN = new bitcore.crypto.BN(s);
-
-  // let lastInput = inputs[inputs.length - 1];
-  // let lastOutput = transaction.outputs[0];
-
-  // let builtSignature = new bitcore.Transaction.Signature({
-  //   signature: new bitcore.crypto.Signature(rBN, sBN),
-  //   prevTxId: lastInput.txId,
-  //   outputIndex: 0,
-  //   inputIndex: inputs.length - 1,
-  //   sigtype: bitcore.crypto.Signature.SIGHASH_ALL,
-  //   publicKey: new bitcore.PublicKey(options.addressInfo.publicKeyRaw, { network: 'testnet' })
-  // });
-
-  // //transaction.applySignature(builtSignature,"ecdsa");
-
-  // let inputToSign = transaction.inputs[inputs.length - 1];
-
-  // if (inputToSign.output.script.isWitnessPublicKeyHashOut() || inputToSign.output.script.isScriptHashOut()) {
-  //   inputToSign.setWitnesses([
-  //     BufferUtil.concat([
-  //       builtSignature.signature.toDER(),
-  //       BufferUtil.integerAsSingleByteBuffer(builtSignature.sigtype)
-  //     ]),
-  //     builtSignature.publicKey.toBuffer()
-  //   ]);
-  // } else {
-  //   inputToSign.setScript(bitcore.Script.buildPublicKeyHashIn(
-  //     builtSignature.publicKey,
-  //     builtSignature.signature.toDER(),
-  //     builtSignature.sigtype
-  //   ));
-  // }//tb1q7q3h9726tes70cqvx6hgu2dj3z9mgx3c473ndw
-
-  // return transaction.serialize();
-
-  // console.log(signature);
-  // console.log(new bitcore.Transaction(signature));
-
-  // console.log(transaction.isFullySigned());
-  //tb1qnnd5xscvttt8475xvwdl20h0zmm2zedzc2p7w3
 }
 
 function signTransaction(txHex, signature, publicKeyRaw) {
