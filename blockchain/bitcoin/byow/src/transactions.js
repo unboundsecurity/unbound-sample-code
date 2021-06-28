@@ -266,12 +266,17 @@ async function createTransaction(options) {
   });
 
 
-  const amount = Number(options.addressInfo.balance);
+  let amount = Number(options.addressInfo.balance);
+
+
+  const fee = 1000;//await calculateFee(options.jwtToken);
+
+  amount -= fee;
 
   // Who we send to
   psbt.addOutput({
     address: to.to,
-    value: amount/2 ,
+    value: amount,
   })
 
 
@@ -279,7 +284,7 @@ async function createTransaction(options) {
   // "cc13679623048ed31168c2777bd42af386abd670a8c1b8c949041a649dc14512"
   const c = psbt.__CACHE;
   // if (!disableFeeCheck) {
-    // psbt.checkFees(psbt, c, psbt.opts);
+  // psbt.checkFees(psbt, c, psbt.opts);
   // }
 
   let tx;
@@ -304,11 +309,11 @@ async function createTransaction(options) {
 
   let providerData = {
     request: {
-      amount: (amount) / 200000000,
+      amount: (amount) / 100000000,
       asset: "BTC",
       recipientAddress: to.to,
       fee: '1m',
-      description: "payback",
+      description: "pay back",
       coin: 1,
       account: 0
     },
@@ -321,28 +326,28 @@ async function createTransaction(options) {
       {
         address: to.to,
         asset: "BTC",
-        amount: amount-1000,
+        amount: amount ,
       },
     ],
     cryptoKind: "ECDSA",
   };
 
-let data = {
-  description: 'BYOW',
-  dataToSign: [
-    tx.getHash().toString('hex'),
-  ],
-  publicKeys: [
-    options.addressInfo.keyId,
-  ],
-  ledgerHashAlgorithm: "DOUBLE_SHA256",
-  // callbackUrl: "http://localhost:3000/api/v1.0/sign_complete_callback?ledgerId=BTCTEST",
-  ledger: "BTCTEST",
-  rawTransactions: [
-    tx.toHex(),
-  ],
-  providerData: JSON.stringify(providerData)
-};
+  let data = {
+    description: 'BYOW',
+    dataToSign: [
+      tx.getHash().toString('hex'),
+    ],
+    publicKeys: [
+      options.addressInfo.keyId,
+    ],
+    ledgerHashAlgorithm: "DOUBLE_SHA256",
+    // callbackUrl: "http://localhost:3000/api/v1.0/sign_complete_callback?ledgerId=BTCTEST",
+    ledger: "BTCTEST",
+    rawTransactions: [
+      tx.toHex(),
+    ],
+    providerData: JSON.stringify(providerData)
+  };
 
 
   var quorumRequestOpId = (await util.superagent.post(`${options.caspMngUrl}/vaults/${vaultId}/sign`)
@@ -368,18 +373,15 @@ let data = {
   if (signOp.isApproved) {
     const publicKey = bitcoinjs.ECPair.fromPublicKey(Buffer.from(options.addressInfo.publicKeyRaw, 'hex'), network).publicKey;
     const encodedSignature = bitcoinjs.script.signature.encode(Buffer.from(signature, 'hex'), bitcoinjs.Transaction.SIGHASH_ALL);
-    for (let index = 0; index < psbt.inputCount; index++) {
-      psbt.updateInput(index, {
-        partialSig: [
-          {
-            pubkey: publicKey,
-            signature: encodedSignature,
-          }
-        ]
-      });
-
-    }
-
+   
+    psbt.updateInput(0, {
+      partialSig: [
+        {
+          pubkey: publicKey,
+          signature: encodedSignature,
+        }
+      ]
+    });
 
     psbt.validateSignaturesOfInput(0);
     psbt.finalizeAllInputs();
@@ -399,6 +401,21 @@ let data = {
   else {
     throw Error("Vault participant didn't sign transactions")
   }
+
+}
+
+// This wasn't finished so it should be ignored 
+async function calculateFee(jwtToken) {
+
+  let blockchains = (await request(`blockchains`, 'get', 
+  [{ option: 'testnet', value: 'true' }], undefined, jwtToken)).data._embedded.blockchains;
+
+  let blockchian = blockchains.filter(b => b.name === 'Bitcoin')[0];
+
+
+  let esitmate = blockchian.fee_estimates[0];
+
+  return esitmate.fee.amount;
 
 }
 
