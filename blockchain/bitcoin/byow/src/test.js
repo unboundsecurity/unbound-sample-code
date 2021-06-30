@@ -64,7 +64,7 @@ async function test() {
         save({ publicKey });
         break;
 
-      // full cycle of deposit, signature and withdrawal for Ethereum BYOW
+      // full cycle of deposit, signature and withdrawal for Bitcoin BYOW
       case 'BTCTEST_FULL':
         var vaults = require('./vaults');
         var activeVault = await vaults.selectActiveVault(appData);
@@ -145,7 +145,7 @@ async function init() {
       default: 'BTCTEST_FULL',
       type: "list", choices: [
         {
-          name: 'BYOW full cycle with Ethereum deposit and withdrawal',
+          name: 'BYOW full cycle with Bitcoin deposit and withdrawal',
           value: 'BTCTEST_FULL'
         },
         {

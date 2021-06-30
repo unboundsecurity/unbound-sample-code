@@ -67,12 +67,12 @@ async function selectActiveVault(options) {
  * @param  {Object} options.activeParticipant - Details of an active participant
  *                  to use as vault member for the new vault
  * @param  {Object} options.demoType - the demo type which is currently running
- *                   can be 'MULTI_COIN', 'ETH_FULL' or 'GEN_PUB_KEY'
+ *                   can be 'MULTI_COIN', 'BTCTEST_FULL' or 'GEN_PUB_KEY'
  * @return {Object} Data of the created vault(id, name etc...)
  */
 async function createVault(options) {
   var newVault;
-  const BTC_COIN_TYPE = 1; //ETH see: https://github.com/satoshilabs/slips/blob/master/slip-0044.md
+  const BTC_COIN_TYPE = 1; //Testnet see: https://github.com/satoshilabs/slips/blob/master/slip-0044.md
   var hierarchyTypes = [
     {
       name: "BIP44 - multi address vault",
@@ -99,7 +99,7 @@ async function createVault(options) {
       },
       {name: 'cryptoKind', message: "Vault crypto kind: ",
           default: 'ECDSA', type: 'list', choices: ['ECDSA', 'EDDSA'],
-          when: options.demoType === 'GEN_PUB_KEY'}, // For eth demo only ECDSA is supported
+          when: options.demoType === 'GEN_PUB_KEY'}, // For btc demo only ECDSA is supported
       {name: 'coinType', message: "Coin type: ", default: BTC_COIN_TYPE,
           validate: util.required("Coin type")},
       {name: 'providerKind', message: "Provider kind: ", default: 'BTCTEST',
@@ -107,7 +107,7 @@ async function createVault(options) {
 
     ]);
     vaultOptions.cryptoKind = vaultOptions.cryptoKind || 'ECDSA';
-    // add vault attributes for Ethereum
+    // add vault attributes for Bitcoin
     vaultOptions = {
       ...vaultOptions,
       firstAccountName: 'Default',

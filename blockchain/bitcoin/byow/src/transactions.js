@@ -29,31 +29,6 @@ function getRawEcPublicKeyFromDerHex(publicKeyDerHexString) {
   return Buffer.from(hex);
 }
 
-
-/**
- * Returns an rlp serialized transaction for verification by CASP
- * This transaction is sent to CASP as rawTransaction for hash verification
- * CASP will run the keccak 256 algorithm on this transaction and will verify the
- * hash against the hash sent for signature.
- * @param  {type} tx the EthereumJs transaction
- * @return {type} a hex encoded string with rlp-serialized transaction
- */
-function getRlpEncodedRawTransactionForSignature(tx) {
-  var chainId = tx._chainId;
-  var items;
-  if (chainId > 0) {
-    const raw = tx.raw.slice();
-    tx.v = chainId;
-    tx.r = 0;
-    tx.s = 0;
-    items = tx.raw;
-    tx.raw = raw;
-  } else {
-    items = tx.raw.slice(0, 6);
-  }
-  return rlp.encode(items).toString('hex');
-}
-
 /**
  * Gets a public key from CASP
  * For BIP44 vaults this will create a new key
@@ -96,12 +71,12 @@ async function getPublicKeyFromCasp(options) {
 }
 
 /**
- * Creates a new BIP44 Ethereum address with CASP
+ * Creates a new BIP44 Bitcoin address with CASP
  *
  * @param  {Object} options
  * @param  {string} options.caspMngUrl - The URL of CASP management API
  * @param  {Object} options.activeVault - Details of the last selected vault(id, name)
- * @return {Object} Address information for the generated Ethereum address,
+ * @return {Object} Address information for the generated Bitcoin address,
  * includes the address, DER encoded public key and hex encoded raw public key bytes
  */
 async function createAddress(options) {
