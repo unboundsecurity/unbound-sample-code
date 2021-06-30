@@ -825,3 +825,4 @@ testing/**/host*
 mobile/desktop/setup/msi/ekp-client-core64/Product Configuration 1/Release 1/**
 
 a.out
+**/byow/data/data.json
