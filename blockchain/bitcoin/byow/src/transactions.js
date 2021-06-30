@@ -133,8 +133,8 @@ async function getBalance(address, options) {
   }, 0).toString();
 }
 
-function satoshiToBtc(amount){
-  return Number(amount)/100000000;
+function satoshiToBtc(amount) {
+  return Number(amount) / 100000000;
 }
 
 /**
@@ -214,9 +214,7 @@ async function createTransaction(options) {
     message: 'To address: '
   }]));
 
-  const utxos = await getUnspentOutputs(address,options);
-
-  var usedInputs = [];
+  const utxos = await getUnspentOutputs(address, options);
 
   utxos.forEach(utxo => {
     psbt.addInput({
@@ -224,12 +222,8 @@ async function createTransaction(options) {
       index: utxo.tx_output_n,
       // VERY IMPORTANT
       nonWitnessUtxo: utxo.tx_raw,
-      // witnessUtxo: {
-      //   script: Buffer.from(input.meta["scriptPubKey.hex"],'hex'),
-      //   value: Number(input.amount.amount)
-      // }
     });
-  });  
+  });
 
   let amount = Number(options.addressInfo.balance);
   const fee = 1000;//await calculateFee(options.jwtToken);
@@ -242,18 +236,76 @@ async function createTransaction(options) {
     value: amount,
   })
 
-  var rawTx = psbt.__CACHE.__TX;
-  var hashes = utxos.map( (utxo, index) => {
-    const hashData = cryptoUtils.rawTxForHash(rawTx ,index, utxo.script , Transaction.SIGHASH_ALL )
+  return { psbt: psbt.toHex() };
+
+}
+
+// This wasn't finished so it should be ignored 
+async function calculateFee(jwtToken) {
+
+  let blockchains = (await request(`blockchains`, 'get',
+    [{ option: 'testnet', value: 'true' }], undefined, jwtToken)).data._embedded.blockchains;
+
+  let blockchian = blockchains.filter(b => b.name === 'Bitcoin')[0];
+
+
+  let esitmate = blockchian.fee_estimates[0];
+
+  return esitmate.fee.amount;
+
+}
+
+async function signTransaction(options) {
+  const psbt = bitcoinjs.Psbt.fromHex(options.pendingTransaction.psbt);
+  const utxos = await getUnspentOutputs(options.addressInfo.address, options);
+
+
+  let hashes = utxos.map((utxo, index) => {
+    const hashData = cryptoUtils.rawTxForHash(psbt.__CACHE.__TX, index, utxo.script, Transaction.SIGHASH_ALL)
     return hashData;
   });
 
-  const vaultId = options.activeVault.id;
-  const c = psbt.__CACHE;
-  let tx;
+  let tx = psbt.__CACHE.__TX.clone();
 
-  tx = c.__TX.clone();
-  //psbt.inputFinalizeGetAmts(psbt.data.inputs, tx, c, true);
+  // Gets the actual signature
+  const signOp = await requestSignature(tx,hashes, psbt.txOutputs[0],options);
+
+  let signature = signOp.signatures[0];
+
+  util.log(`Signature created: ${signature}`)
+
+  if (signOp.isApproved) {
+    const publicKey = bitcoinjs.ECPair.fromPublicKey(Buffer.from(options.addressInfo.publicKeyRaw, 'hex'), network).publicKey;
+    const encodedSignature = bitcoinjs.script.signature.encode(Buffer.from(signature, 'hex'), Transaction.SIGHASH_ALL);
+
+    psbt.updateInput(0, {
+      partialSig: [
+        {
+          pubkey: publicKey,
+          signature: encodedSignature,
+        }
+      ]
+    });
+
+    psbt.validateSignaturesOfInput(0);
+    psbt.finalizeAllInputs();
+
+    let psbtTrans = psbt.extractTransaction();
+
+
+    return psbtTrans.toHex();
+
+  }
+  else {
+    throw Error("Vault participant didn't sign transactions")
+  }
+
+}
+
+async function requestSignature(tx, hashes,output, options) {
+
+  const vaultId = options.activeVault.id;
+
   util.showSpinner('Requesting signature from CASP');
   var dataToSign = [];
   var publicKeys = [];
@@ -263,22 +315,12 @@ async function createTransaction(options) {
     rawTransactions.push(hash.raw.toString('hex'));
     publicKeys.push(options.addressInfo.keyId);
   })
-  var signRequest = {
-    dataToSign,
-    publicKeys,
-    description: 'Test transaction BTCTEST',
-    // the details are shown to the user when requesting approval
-    details: JSON.stringify(psbt, undefined, 2),
-    // callbackUrl: can be used to receive notifictaion when the sign operation
-    // is approved
-
-  };
 
   let providerData = {
     request: {
-      amount: satoshiToBtc(amount),
+      amount: satoshiToBtc(output.value),
       asset: "BTC",
-      recipientAddress: to.to,
+      recipientAddress: output.address,
       fee: '1m',
       description: "pay back",
       coin: 1,
@@ -291,9 +333,9 @@ async function createTransaction(options) {
     ],
     recipients: [
       {
-        address: to.to,
+        address: output.address,
         asset: "BTC",
-        amount: amount ,
+        amount: output.value,
       },
     ],
     cryptoKind: "ECDSA",
@@ -327,73 +369,8 @@ async function createTransaction(options) {
 
   util.hideSpinner();
 
-  let signature = signOp.signatures[0];
+  return signOp;
 
-  util.log(`Signature created: ${signature}`)
-
-  if (signOp.isApproved) {
-    const publicKey = bitcoinjs.ECPair.fromPublicKey(Buffer.from(options.addressInfo.publicKeyRaw, 'hex'), network).publicKey;
-    const encodedSignature = bitcoinjs.script.signature.encode(Buffer.from(signature, 'hex'), Transaction.SIGHASH_ALL);
-    
-    psbt.updateInput(0, {
-      partialSig: [
-        {
-          pubkey: publicKey,
-          signature: encodedSignature,
-        }
-      ]
-    });
-
-    psbt.validateSignaturesOfInput(0);
-    psbt.finalizeAllInputs();
-
-    let psbtTrans = psbt.extractTransaction();
-
-    // let transaction = psbt.extractTransaction();
-    // transaction.setInputScript(0,publicKey);
-
-    // new bitcore.Transaction(tx.toHex()).verify()
-
-    // return transaction.toHex();
-    // "c42058735c1a6465d734d2af387b0b2ba2f29719d47aa424e23397043bc64a41"
-    return psbtTrans.toHex();
-
-  }
-  else {
-    throw Error("Vault participant didn't sign transactions")
-  }
-
-}
-
-// This wasn't finished so it should be ignored 
-async function calculateFee(jwtToken) {
-
-  let blockchains = (await request(`blockchains`, 'get', 
-  [{ option: 'testnet', value: 'true' }], undefined, jwtToken)).data._embedded.blockchains;
-
-  let blockchian = blockchains.filter(b => b.name === 'Bitcoin')[0];
-
-
-  let esitmate = blockchian.fee_estimates[0];
-
-  return esitmate.fee.amount;
-
-}
-
-function signTransaction(txHex, signature, publicKeyRaw) {
-  const transaction = bitcoinjs.Transaction.fromHex(txHex);
-
-  const encodedSignature = bitcoinjs.script.signature.encode(Buffer.from(signature, 'hex'), bitcoinjs.Transaction.SIGHASH_ALL);
-  const publicKey = bitcoinjs.ECPair.fromPublicKey(Buffer.from(publicKeyRaw, 'hex'), network).publicKey;
-  const scriptSig = bitcoinjs.payments.p2pkh({
-    signature: encodedSignature,
-    pubkey: publicKey,
-    network: network
-  });
-  transaction.setInputScript(0, scriptSig.input);
-
-
-  return transaction.toHex();
 }
 
 /**
@@ -403,7 +380,7 @@ function signTransaction(txHex, signature, publicKeyRaw) {
  */
 async function sendTransaction(options) {
 
-  const hex = options.pendingTransaction;
+  const hex = options.pendingTransaction.signed;
   const transaction = bitcoinjs.Transaction.fromHex(hex);
   const hash = transaction.getHash().toString('hex');
 
@@ -423,7 +400,7 @@ async function sendTransaction(options) {
   util.hideSpinner();
   util.log(`Transaction sent successfully, txHash is: ${postResult.data.hash}`);
   util.log(`More info at: https://blockstream.info/testnet/tx/${postResult.data.hash}`);
-  
+
   return postResult.transactionHash;
 }
 

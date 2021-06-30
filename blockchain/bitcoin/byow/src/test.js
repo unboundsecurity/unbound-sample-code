@@ -80,12 +80,11 @@ async function test() {
         var pendingTransaction = appData.pendingTransaction ||  await transactions.createTransaction(appData);
         save({ pendingTransaction });
 
-        // if (!pendingTransaction.signed) {
-        //   var signInfo = await transactions.signTransaction(appData);
-        //   save({ signOperation: signInfo.signOperation });
-        //   pendingTransaction.signed = signInfo.serializedSignedTransaction;
-        //   save({ pendingTransaction });
-        // }
+        if (!pendingTransaction.signed) {
+          let signed = await transactions.signTransaction(appData);
+          pendingTransaction.signed = signed;
+          save({ pendingTransaction });
+        }
 
         pendingTransaction.transactionHash = pendingTransaction.transactionHash
           || await transactions.sendTransaction(appData);
