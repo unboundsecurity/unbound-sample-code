@@ -259,15 +259,20 @@ async function calculateFee(jwtToken) {
 
 async function signTransaction(options) {
   const psbt = bitcoinjs.Psbt.fromHex(options.pendingTransaction.psbt);
-  const utxos = await getUnspentOutputs(options.addressInfo.address, options);
-
-
-  let hashes = utxos.map((utxo, index) => {
-    const hashData = cryptoUtils.rawTxForHash(psbt.__CACHE.__TX, index, utxo.script, Transaction.SIGHASH_ALL)
-    return hashData;
-  });
 
   let tx = psbt.__CACHE.__TX.clone();
+
+  // Gets the scripts of the utxo's
+  const scripts = psbt.data.inputs.map((input,index)=> {
+    const inputIndex = psbt.txInputs[index].index;
+    return Transaction.fromBuffer(input.nonWitnessUtxo).outs[inputIndex].script
+
+  });
+
+  let hashes = scripts.map((script,index) => {
+    const hashData = cryptoUtils.rawTxForHash(psbt.__CACHE.__TX, index, script, Transaction.SIGHASH_ALL)
+    return hashData;
+  });
 
   // Gets the actual signature
   const signOp = await requestSignature(tx,hashes, psbt.txOutputs[0],options);
