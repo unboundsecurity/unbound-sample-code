@@ -1,18 +1,15 @@
 "use strict";
 const inquirer = require('inquirer');
 const asn1js = require('asn1js');
-const EthUtil = require('ethereumjs-util');
-const EthereumTx = require('ethereumjs-tx');
-const chainId = 3; //eth-ropsten
 const util = require('./util');
 const Promise = require('bluebird');
 const rlp = require('rlp');
 const bitcore = require('bitcore-lib');
 const axios = require('axios');
 const bitcoinjs = require('bitcoinjs-lib');
-const BufferUtil = bitcore.util.buffer;
 const network = bitcoinjs.networks.testnet;
-
+const Transaction = bitcoinjs.Transaction;
+const cryptoUtils = require('./cryptoUtils');
 
 /**
  * Extract raw public key bytes from DER encoded EC public key.
@@ -184,6 +181,10 @@ async function getUnspentOutputs(address, options) {
       tx_output_n: Number(uo.meta.n),
       value: Number(uo.amount.amount),
       confirmations: parentTx.confirmations,
+      tx_raw: Buffer.from(
+        parentTx.raw,
+        'base64',
+      ),
       script: parentTxOutputs[Number(uo.meta.n)].script.toBuffer()
     };
   });
@@ -226,7 +227,7 @@ async function getTransactions(address, jwtToken) {
  *                  that were used to create it and the transaction hash for signature
  */
 async function createTransaction(options) {
-
+  // create a partially signed transaction
   const psbt = new bitcoinjs.Psbt({ network: network });
   const address = options.addressInfo.address;
 
@@ -235,40 +236,29 @@ async function createTransaction(options) {
     message: 'To address: '
   }]));
 
-  const utxos = (await request('transactions', 'get', [
-    { option: 'include_raw', value: 'true' },
-    { option: 'address', value: address }
-  ], undefined, options.jwtToken)).data._embedded.transactions;
+  // const utxos = (await request('transactions', 'get', [
+  //   { option: 'include_raw', value: 'true' },
+  //   { option: 'address', value: address }
+  // ], undefined, options.jwtToken)).data._embedded.transactions;
 
+  const utxos = await getUnspentOutputs(address,options);
 
-  utxos.forEach(element => {
+  var usedInputs = [];
 
-    // Finds all of the inputs for the transaction
-    const transfers = element._embedded.transfers.reduce((a, b) => a.concat(b), []);
-    const inputs = transfers.filter(t => t.to_address === address);
-    for (let index = 0; index < inputs.length; index++) {
-      const input = inputs[index];
-
-      psbt.addInput({
-        hash: element.identifier,
-        index: Number(input.meta.n === undefined ? input.meta.vout : input.meta.n),
-        // VERY IMPORTANT
-        nonWitnessUtxo: Buffer.from(
-          element.raw,
-          'base64',
-        ),
-        // witnessUtxo: {
-        //   script: Buffer.from(input.meta["scriptPubKey.hex"],'hex'),
-        //   value: Number(input.amount.amount)
-        // }
-      });
-    }
-  });
-
+  utxos.forEach(utxo => {
+    psbt.addInput({
+      hash: utxo.tx_hash,
+      index: utxo.tx_output_n,
+      // VERY IMPORTANT
+      nonWitnessUtxo: utxo.tx_raw,
+      // witnessUtxo: {
+      //   script: Buffer.from(input.meta["scriptPubKey.hex"],'hex'),
+      //   value: Number(input.amount.amount)
+      // }
+    });
+  });  
 
   let amount = Number(options.addressInfo.balance);
-
-
   const fee = 1000;//await calculateFee(options.jwtToken);
 
   amount -= fee;
@@ -279,6 +269,30 @@ async function createTransaction(options) {
     value: amount,
   })
 
+  var rawTx = psbt.__CACHE.__TX;
+  var hashes = utxos.map( (utxo, index) => {
+
+    // const { hash, sighashType, script } = getHashForSig(
+    //   psbt.txInputs[index].index,
+    //   Object.assign({}, i),
+    //   psbt.__CACHE,
+    //   false);
+    // return hash;
+    // const script = Buffer.from(usedInputs[index].meta["scriptPubKey.hex"],'hex')
+    const hashData = cryptoUtils.rawTxForHash(rawTx ,index, utxo.script , Transaction.SIGHASH_ALL )
+    return hashData;
+  });
+
+  // var caspAsyncSigner = {
+  //   publicKey: Buffer.from(options.addressInfo.publicKeyRaw, 'hex'),
+  //   network,
+  //   sign: (hash, lowR) => {
+  //     console.log(hash.toString('hex'));
+      
+
+  //   }
+  // }
+  // psbt.signAllInputs()
 
   const vaultId = options.activeVault.id;
   // "cc13679623048ed31168c2777bd42af386abd670a8c1b8c949041a649dc14512"
@@ -286,19 +300,22 @@ async function createTransaction(options) {
   // if (!disableFeeCheck) {
   // psbt.checkFees(psbt, c, psbt.opts);
   // }
-
   let tx;
 
   tx = c.__TX.clone();
   //psbt.inputFinalizeGetAmts(psbt.data.inputs, tx, c, true);
   util.showSpinner('Requesting signature from CASP');
+  var dataToSign = [];
+  var publicKeys = [];
+  var rawTransactions = [];
+  hashes.forEach(hash => {
+    dataToSign.push(hash.hash.toString('hex'));
+    rawTransactions.push(hash.raw.toString('hex'));
+    publicKeys.push(options.addressInfo.keyId);
+  })
   var signRequest = {
-    dataToSign: [
-      tx.toHex()
-    ],
-    publicKeys: [
-      options.addressInfo.keyId
-    ],
+    dataToSign,
+    publicKeys,
     description: 'Test transaction BTCTEST',
     // the details are shown to the user when requesting approval
     details: JSON.stringify(psbt, undefined, 2),
@@ -334,18 +351,12 @@ async function createTransaction(options) {
 
   let data = {
     description: 'BYOW',
-    dataToSign: [
-      tx.getHash().toString('hex'),
-    ],
-    publicKeys: [
-      options.addressInfo.keyId,
-    ],
+    dataToSign,
+    publicKeys,
     ledgerHashAlgorithm: "DOUBLE_SHA256",
     // callbackUrl: "http://localhost:3000/api/v1.0/sign_complete_callback?ledgerId=BTCTEST",
     ledger: "BTCTEST",
-    rawTransactions: [
-      tx.toHex(),
-    ],
+    rawTransactions,
     providerData: JSON.stringify(providerData)
   };
 
@@ -372,8 +383,8 @@ async function createTransaction(options) {
 
   if (signOp.isApproved) {
     const publicKey = bitcoinjs.ECPair.fromPublicKey(Buffer.from(options.addressInfo.publicKeyRaw, 'hex'), network).publicKey;
-    const encodedSignature = bitcoinjs.script.signature.encode(Buffer.from(signature, 'hex'), bitcoinjs.Transaction.SIGHASH_ALL);
-   
+    const encodedSignature = bitcoinjs.script.signature.encode(Buffer.from(signature, 'hex'), Transaction.SIGHASH_ALL);
+    
     psbt.updateInput(0, {
       partialSig: [
         {
@@ -460,8 +471,9 @@ async function sendTransaction(options) {
     options.jwtToken);
 
   util.hideSpinner();
-  util.log(`Transaction sent successfully, txHash is: ${postResult.transactionHash}`);
-  // console.log(res.data);
+  util.log(`Transaction sent successfully, txHash is: ${postResult.data.hash}`);
+  util.log(`More info at: https://blockstream.info/testnet/tx/${postResult.data.hash}`);
+  
   return postResult.transactionHash;
 }
 
