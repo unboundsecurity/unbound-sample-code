@@ -9,6 +9,8 @@ const bitcoinjs = require('bitcoinjs-lib');
 const network = bitcoinjs.networks.testnet;
 const Transaction = bitcoinjs.Transaction;
 const cryptoUtils = require('./cryptoUtils');
+const satoshiConverter = require("satoshi-bitcoin");
+
 
 /**
  * Extract raw public key bytes from DER encoded EC public key.
@@ -134,7 +136,7 @@ async function getBalance(address, options) {
 }
 
 function satoshiToBtc(amount) {
-  return Number(amount) / 100000000;
+  return  satoshiConverter.toBitcoin(Number(amount));
 }
 
 /**
