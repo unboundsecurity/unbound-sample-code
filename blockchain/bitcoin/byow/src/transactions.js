@@ -236,11 +236,6 @@ async function createTransaction(options) {
     message: 'To address: '
   }]));
 
-  // const utxos = (await request('transactions', 'get', [
-  //   { option: 'include_raw', value: 'true' },
-  //   { option: 'address', value: address }
-  // ], undefined, options.jwtToken)).data._embedded.transactions;
-
   const utxos = await getUnspentOutputs(address,options);
 
   var usedInputs = [];
@@ -271,35 +266,12 @@ async function createTransaction(options) {
 
   var rawTx = psbt.__CACHE.__TX;
   var hashes = utxos.map( (utxo, index) => {
-
-    // const { hash, sighashType, script } = getHashForSig(
-    //   psbt.txInputs[index].index,
-    //   Object.assign({}, i),
-    //   psbt.__CACHE,
-    //   false);
-    // return hash;
-    // const script = Buffer.from(usedInputs[index].meta["scriptPubKey.hex"],'hex')
     const hashData = cryptoUtils.rawTxForHash(rawTx ,index, utxo.script , Transaction.SIGHASH_ALL )
     return hashData;
   });
 
-  // var caspAsyncSigner = {
-  //   publicKey: Buffer.from(options.addressInfo.publicKeyRaw, 'hex'),
-  //   network,
-  //   sign: (hash, lowR) => {
-  //     console.log(hash.toString('hex'));
-      
-
-  //   }
-  // }
-  // psbt.signAllInputs()
-
   const vaultId = options.activeVault.id;
-  // "cc13679623048ed31168c2777bd42af386abd670a8c1b8c949041a649dc14512"
   const c = psbt.__CACHE;
-  // if (!disableFeeCheck) {
-  // psbt.checkFees(psbt, c, psbt.opts);
-  // }
   let tx;
 
   tx = c.__TX.clone();
