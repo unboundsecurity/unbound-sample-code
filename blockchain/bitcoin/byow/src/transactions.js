@@ -3,7 +3,6 @@ const inquirer = require('inquirer');
 const asn1js = require('asn1js');
 const util = require('./util');
 const Promise = require('bluebird');
-const rlp = require('rlp');
 const bitcore = require('bitcore-lib');
 const axios = require('axios');
 const bitcoinjs = require('bitcoinjs-lib');
@@ -113,7 +112,7 @@ async function waitForDeposit(options) {
     } while (balance === BigInt(0));
     util.hideSpinner();
     util.log(`Using address: ${address}`)
-    util.log(`Balance is: ${balance} BTCTST`);
+    util.log(`Balance is: ${satoshiToBtc(balance)} BTC`);
     return balance.toString();
   } catch (e) {
     console.log(e);
@@ -132,6 +131,10 @@ async function getBalance(address, options) {
   return (await getUnspentOutputs(address, options)).reduce((total, curr) => {
     return total + curr.value;
   }, 0).toString();
+}
+
+function satoshiToBtc(amount){
+  return Number(amount)/100000000;
 }
 
 /**
@@ -273,7 +276,7 @@ async function createTransaction(options) {
 
   let providerData = {
     request: {
-      amount: (amount) / 100000000,
+      amount: satoshiToBtc(amount),
       asset: "BTC",
       recipientAddress: to.to,
       fee: '1m',
