@@ -89,7 +89,7 @@ async function test() {
 
         pendingTransaction.transactionHash = pendingTransaction.transactionHash
           || await transactions.sendTransaction(appData);
-        save({ pendingTransaction });
+        save({ pendingTransaction: undefined, lastSuccessfulTransaction: pendingTransaction });
 
         break;
     }
