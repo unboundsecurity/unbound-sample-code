@@ -53,12 +53,12 @@ class CaspClient {
   // Lists CASP accounts. Accounts are top level containers for vaults and participants
   listAccounts() {
     return this.superagent.get(`${this.caspBaseUrl}/accounts`)
-      .then(res => res.body);
+      .then(res => res.body.items);
   }
 
   listParticipants(accountId) {
     return this.superagent.get(`${this.caspBaseUrl}/accounts/${encode(this.activeAccountId)}/participants`)
-      .then(res => res.body)
+      .then(res => res.body.items)
   }
 
   async findVaultByName(name) {
@@ -122,14 +122,14 @@ class CaspClient {
       .then(res => res.body.items && res.body.items[0])
   }
 
-  getVaultCoins(vaultOrVaultId) {
-    return this.superagent.get(`${this._vaultBaseUrl(vaultOrVaultId)}/coins`)
-      .then(res => res.body && res.body.coins)
+  async getVaultCoins(vaultOrVaultId) {
+    const res = await this.superagent.get(`${this._vaultBaseUrl(vaultOrVaultId)}/coins`)
+    return res.body && res.body.items;
   }
 
   getVaultAccounts(vaultOrVaultId, coinType) {
     return this.superagent.get(`${this._vaultBaseUrl(vaultOrVaultId)}/coins/${encode(coinType)}/accounts`)
-      .then(res => res.body)
+      .then(res => (res.body.items || res.body))
   }
 
   async createSignOperation(vaultId, signRequest) {
@@ -161,6 +161,7 @@ class CaspClient {
    */
   async getPendingJoinOp(vault) {
     var ops = await this.getPendingOps();
+
     var joinOps = ops.filter(o => (o.vaultID === vault.id && o.kind === 'JOIN_VAULT'));
     var op = joinOps[0];
     if(op) return await this.getOperation(op);
