@@ -53,18 +53,18 @@ class CaspClient {
   // Lists CASP accounts. Accounts are top level containers for vaults and participants
   listAccounts() {
     return this.superagent.get(`${this.caspBaseUrl}/accounts`)
-      .then(res => res.body.items);
+      .then(res => res.body.items || res.body);
   }
 
   listParticipants(accountId) {
     return this.superagent.get(`${this.caspBaseUrl}/accounts/${encode(this.activeAccountId)}/participants`)
-      .then(res => res.body.items)
+      .then(res => (res.body.items || res.body))
   }
 
   async findVaultByName(name) {
     await this.initActiveAccount();
     var res = await this.superagent.get(`${this.caspBaseUrl}/accounts/${encode(this.activeAccountId)}/vaults?limit=1&filter=${encodeURIComponent(String(name))}`)
-    var vault = (res.body && res.body.items || [])[0];
+    var vault = (res.body && res.body.items || res.body || [])[0];
     if(vault && vault.name.toUpperCase() === name.toUpperCase()) {
       return vault;
     }
@@ -119,12 +119,12 @@ class CaspClient {
 
   getLastBip44VaultPublicKey(vaultOrVaultId, coinType, accountIndex, chain) {
     return this.superagent.get(`${this._vaultBaseUrl(vaultOrVaultId)}/coins/${encode(coinType)}/accounts/${encode(accountIndex)}/chains/${encode(chain)}/addresses?limit=1&sort=lastUpdatedAt:desc`)
-      .then(res => res.body.items && res.body.items[0])
+      .then(res => (res.body.items || res.body || [])[0])
   }
 
   async getVaultCoins(vaultOrVaultId) {
     const res = await this.superagent.get(`${this._vaultBaseUrl(vaultOrVaultId)}/coins`)
-    return res.body && res.body.items;
+    return res.body && res.body.items || res.body;
   }
 
   getVaultAccounts(vaultOrVaultId, coinType) {
@@ -152,7 +152,7 @@ class CaspClient {
 
   async getPendingOps() {
     var opRes = await this.superagent.get(`${this._accountUrl()}/operations?limit=10&status=PENDING&sort=createdAt:desc`)
-    return opRes.body.items || [];
+    return (opRes.body.items || opRes.body || []);
   }
 
   /**
