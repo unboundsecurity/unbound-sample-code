@@ -124,7 +124,7 @@ class CaspClient {
 
   async getVaultCoins(vaultOrVaultId) {
     const res = await this.superagent.get(`${this._vaultBaseUrl(vaultOrVaultId)}/coins`)
-    return res.body && res.body.items || res.body;
+    return res.body && (res.body.items || res.body.coins || res.body);
   }
 
   getVaultAccounts(vaultOrVaultId, coinType) {
