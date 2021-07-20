@@ -61,8 +61,8 @@ Use the following steps to run the CASP demo.
 
 1. Access the device where you have the GitHub repo downloaded.
 1. Navigate to the ERC20 directory: `unbound-sample-code/blockchain/ethereum/erc20`
-
-Note that these files were downloaded from the [GitHub repository](https://github.com/unboundsecurity/unbound-sample-code/tree/main/blockchain/ethereum/erc20).
+    
+    Note that these files were downloaded from the [GitHub repository](https://github.com/unboundsecurity/unbound-sample-code/tree/main/blockchain/ethereum/erc20).
 1. Run the following command: `npm i`
 3. **Reset** - This step cleans up any data from previously running the demo.
    ```
