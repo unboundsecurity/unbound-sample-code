@@ -18,6 +18,18 @@ For more information, see:
 
 You need to have the [CASP Express Deploy](https://github.com/unboundsecurity/casp-express-deploy) installed and running.
 
+If you want to be able to view token balances in the CASP web interface, you need to create a *.env* file and use it when starting Docker. The file has this format:
+```
+INFURA_PROJECTID=<ID>
+BLOCKSET_TOKEN=<TOKEN>
+FIREBASE_TOKEN=<FIREBASE-TOKEN>
+```
+Insert your ID and tokens in the placeholders in that file.
+
+To start docker, use the following command:
+
+`docker-compose --env-file=.env up`
+
 **Ethereum Wallet**
 
 Before running the demo, you need to have an Ethereum Ropsten Test wallet with ~1 Eth. During the demo, we will transfer some to the *Contract vault*.
