@@ -96,7 +96,13 @@ module.exports = class UkcEthereumWallet {
 				throw `Key '${keyName}' not compatible with Ethereum. Must be ECC SECP_256K_1, but its ${JSON.stringify(keyFormat)}`;
 			};
 		} catch (e) {
-			if ((e.response || {}).status != 400) throw e;
+			const status = (e.response || {}).status;
+			if ( status != 400 && status != 404) {
+				if (status) {
+					console.log("Unexpected status: " + status);
+				}
+				throw e;
+			}
 			print(`Key not found. Creating key '${keyName}'`);
 			await partitionAdmin.post(`keys/generate`, {
 				keyId: keyName,
