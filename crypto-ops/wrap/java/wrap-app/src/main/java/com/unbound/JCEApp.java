@@ -39,7 +39,6 @@ public class JCEApp implements App {
         ubKS = KeyStore.getInstance(UB_PROVIDER_TYPE, UB_PROVIDER_NAME);
         if (token != null) {
             String auth = String.format("{\"token\":\"%s\"}", token);
-            System.out.println(auth);
             ubKS.load(null, auth.toCharArray());
         } else if (user != null && password != null) {
             String auth = String.format("{\"username\":\"%s\", \"password\":\"%s\"}", user, password);
