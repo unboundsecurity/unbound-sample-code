@@ -61,17 +61,17 @@ Sample code is provided for the following use cases:
 
 ## C examples
 - [password.c](https://github.com/unboundsecurity/unbound-sample-code/tree/main/passwords/pkcs11) - proprietary password protection
-- [adv_aes.c](adv_aes.c) - encrypt and decrypt with advanced symmetric cryptography
-- [pqc_lima.c](pqc_lima.cpp) - using post-quantum LIMA key
-- [eddsa.c](eddsa.c) - using EdDSA key
-- [derive_nist_kdf.c](derive_nist_kdf.c) - AES CMAC key derivation with NIST KDF
-- [ecdsa_bip.c](ecdsa_bip.c) - BIP32 derivation
+- [adv_aes.c](https://github.com/unboundsecurity/unbound-sample-code/tree/main/crypto-ops/encrypt/pkcs11) - encrypt and decrypt with advanced symmetric cryptography
+- [pqc_lima.c](https://github.com/unboundsecurity/unbound-sample-code/tree/main/crypto-ops/encrypt/pkcs11) - using post-quantum LIMA key
+- [eddsa.c](https://github.com/unboundsecurity/unbound-sample-code/tree/main/crypto-ops/sign/pkcs11) - using EdDSA key
+- [derive_nist_kdf.c](https://github.com/unboundsecurity/unbound-sample-code/tree/cca7ccdf17b1608f101146366f87721a92feeafa/crypto-ops/derive/pkcs11) - AES CMAC key derivation with NIST KDF
+- [ecdsa_bip.c](https://github.com/unboundsecurity/unbound-sample-code/tree/cca7ccdf17b1608f101146366f87721a92feeafa/blockchain/bitcoin/pkcs11) - BIP32 derivation
 - [wrap-unwrap.c](https://github.com/unboundsecurity/unbound-sample-code/tree/main/crypto-ops/wrap/pkcs11) - stores a wrapped encrypted key (AES) in UKC and unwraps it
-- [wrap-unwrap_rsa.c](wrap_unwrap_rsa.c) - As above, but with RSA wrapping key
-- [aes_gcm.c](aes_gcm.c) - AES GCM operation
-- [x509_sign.c](x509_sign.c) - X.509 certificate functions
+- [wrap-unwrap_rsa.c](https://github.com/unboundsecurity/unbound-sample-code/tree/main/crypto-ops/wrap/pkcs11) - As above, but with RSA wrapping key
+- [aes_gcm.c](https://github.com/unboundsecurity/unbound-sample-code/tree/main/crypto-ops/encrypt/pkcs11) - AES GCM operation
+- [x509_sign.c](https://github.com/unboundsecurity/unbound-sample-code/tree/main/certificates/pkcs11) - X.509 certificate functions
 
 ## Java examples
-- [aes_gcm.java](aes_gcm.java)    - AES GCM operation
-- [ecdsa.java](ecdsa.java)        - ECDSA operation
+- [aes_gcm.java](https://github.com/unboundsecurity/unbound-sample-code/tree/main/crypto-ops/encrypt/java/pkcs11)    - AES GCM operation
+- [ecdsa.java](https://github.com/unboundsecurity/unbound-sample-code/tree/main/crypto-ops/sign/java/pkcs11)        - ECDSA operation
 
