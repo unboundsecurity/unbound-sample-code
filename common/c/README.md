@@ -28,9 +28,7 @@ The associated PKCS#11 extended key types, attributes, and mechanisms are provid
 
 1. PQC Encryption.
 
-    UKC includes an MPC implementation of a Post Quantum Cryptography encryption algorithm called LIMA. This is a lattice based encryption scheme which is part of the NIST PQC Contest.
-    
-    For more information, see [here](https://csrc.nist.gov/Projects/Post-Quantum-Cryptography/Round-1-Submissions).  
+    UKC includes an MPC implementation of a Post Quantum Cryptography encryption algorithm called LIMA. This is a lattice based encryption scheme.
 
 
 1. NIST Key Derivation Function.
