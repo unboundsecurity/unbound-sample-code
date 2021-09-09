@@ -54,6 +54,24 @@ The associated PKCS#11 extended key types, attributes, and mechanisms are provid
 
     Includes creating a CSR, signing, and self-signing.
     
-## Sample Code
 
-Sample code is describe in the [Sample Code Readme](./sample_code/README_sample_code.md).
+# Unbound Key Control PKCS#11 Sample Code
+
+Sample code is provided for the following use cases:
+
+## C examples
+- [password.c](https://github.com/unboundsecurity/unbound-sample-code/tree/main/passwords/pkcs11) - proprietary password protection
+- [adv_aes.c](adv_aes.c) - encrypt and decrypt with advanced symmetric cryptography
+- [pqc_lima.c](pqc_lima.cpp) - using post-quantum LIMA key
+- [eddsa.c](eddsa.c) - using EdDSA key
+- [derive_nist_kdf.c](derive_nist_kdf.c) - AES CMAC key derivation with NIST KDF
+- [ecdsa_bip.c](ecdsa_bip.c) - BIP32 derivation
+- [wrap-unwrap.c](https://github.com/unboundsecurity/unbound-sample-code/tree/main/crypto-ops/wrap/pkcs11) - stores a wrapped encrypted key (AES) in UKC and unwraps it
+- [wrap-unwrap_rsa.c](wrap_unwrap_rsa.c) - As above, but with RSA wrapping key
+- [aes_gcm.c](aes_gcm.c) - AES GCM operation
+- [x509_sign.c](x509_sign.c) - X.509 certificate functions
+
+## Java examples
+- [aes_gcm.java](aes_gcm.java)    - AES GCM operation
+- [ecdsa.java](ecdsa.java)        - ECDSA operation
+
