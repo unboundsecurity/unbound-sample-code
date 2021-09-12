@@ -29,6 +29,8 @@ extern "C" {
 // EDDSA key type                        
 #define DYCKK_EDDSA                           ((unsigned)0x80007108)
 
+// Split key type
+#define DYCKK_SPLIT                           ((unsigned)0x8000710b)
 
 // -----------------------------------------
 // DYCKA - vendor specific attributes:
@@ -91,6 +93,12 @@ extern "C" {
 // Object revocation message
 #define DYCKA_REVOCATION_MESSAGE              ((unsigned)0x8000722D)
 
+// Part number of split key
+#define DYCKA_SPLIT_PART                      ((unsigned)0x80007243)
+
+// Parts count of split key
+#define DYCKA_SPLIT_PARTS                     ((unsigned)0x80007244)
+
 // External storage flag
 #define DYCKA_IS_EXTERNAL					            ((unsigned)0x80007250)
 
@@ -102,6 +110,7 @@ extern "C" {
 
 // External bring your own key flag
 #define DYCKA_KEYSTORE_IS_BYOK				        ((unsigned)0x80007253)
+
 
 
 // -----------------------------------------
@@ -309,7 +318,14 @@ extern "C" {
     CK_OBJECT_HANDLE  hObject,    // the object's handle 
     CK_FLAGS flags);              // full delete flag 
 
-
+  // Join split keys
+  CK_RV CK_EXPORT_SPEC CK_CALL_SPEC DYC_JoinSplitKeys(
+    CK_SESSION_HANDLE     hSession,      // the session's handle 
+    CK_OBJECT_HANDLE_PTR  phSplitKeys,   // the handles of the split keys  
+    CK_ULONG              ulObjectCount, // split keys count
+    CK_ATTRIBUTE_PTR      pTemplate,     // the joined object's template
+    CK_ULONG              ulCount,       // attributes in template 
+    CK_OBJECT_HANDLE_PTR  phObject);     // gets new object's handle  
 
 #ifdef __cplusplus
 } // extern "C" 
