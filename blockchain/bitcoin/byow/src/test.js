@@ -38,16 +38,6 @@ async function test() {
     save({ activeVault });
 
     switch (appData.demoType) {
-      // shows how to list and add coins to BIP44 vaults
-      case 'MULTI_COIN':
-        var addCoin;
-        do {
-          var coins = await vaults.listCoins(appData);
-          util.log(`Available vault coins: ${coins.join(', ')}`);
-          addCoin = await vaults.addCoin(appData);
-        } while (addCoin);
-        break;
-
       // shows how to generate public key
       case 'GEN_PUB_KEY':
         var publicKey = await transactions.getPublicKeyFromCasp(appData);
@@ -137,10 +127,6 @@ async function init() {
         {
           name: 'Public key generation only',
           value: 'GEN_PUB_KEY'
-        },
-        {
-          name: 'Multi coins vault',
-          value: 'MULTI_COIN'
         }
       ]
     }

@@ -28,10 +28,6 @@ async function selectActiveVault(options) {
 
   vaults = vaults.filter(v => v.isActive);
 
-  // multiple coins is only supported for BIP44 vaults
-  if(options.demoType === 'MULTI_COIN') {
-    vaults = vaults.filter(v => v.hierarchy === 'BIP44');
-  }
   // try to use last selected vault
   var selected = vaults.find(v => v.id === (options.activeVault || {}).id);
 
@@ -77,16 +73,13 @@ async function createVault(options) {
     {
       name: "BIP44 - multi address vault",
       value: "BIP44"
+    },
+    {
+      name: "NONE - single address vault",
+      value: "NONE"
     }
   ];
-  if(options.demoType != 'MULTI_COIN') {
-    // for multi coin demo - only BIP44 is relevant
-    hierarchyTypes.push(
-      {
-        name: "NONE - single address vault",
-        value: "NONE"
-      });
-  }
+  
   while(!newVault) {
     // prompt user for name and description
     var vaultOptions = await inquirer.prompt([
