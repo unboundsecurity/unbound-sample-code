@@ -57,6 +57,9 @@ module.exports = class UkcEthereumWallet {
 				password: this.rootSoPassword
 			}
 		});
+		const info = await ukcAdmin.get(`info`);
+		const ukcVersion = info.data.version;
+		console.log(`Connected to UKC ${ukcVersion}`);
 		const partitionName = this.partitionName;
 		try {
 			await ukcAdmin.get(`partitions/${partitionName}`);
@@ -81,16 +84,30 @@ module.exports = class UkcEthereumWallet {
 		});
 		const keyName = this.keyName;
 		try {
-			const keyFormat = (await partitionAdmin.get(`keys/${keyName}`)).data.keyFormat;
-			if (keyFormat.type !== "ECC" || keyFormat.curve !== "SECP_256K_1") {
+			const keyResponse = (await partitionAdmin.get(`keys/${keyName}`)).data;
+			if(!(keyResponse && keyResponse.keyFormat)) {
+				console.log("Unexpected response from getKey");
+				console.log(keyResponse);
+				throw "Unexpected data format";
+			}
+			const keyFormat = keyResponse.keyFormat;
+			
+			if (keyFormat.type !== "ECC" || (keyFormat.curve !== "SECP_256K_1" && keyFormat.curve !== "SECP256K1")) {
 				throw `Key '${keyName}' not compatible with Ethereum. Must be ECC SECP_256K_1, but its ${JSON.stringify(keyFormat)}`;
 			};
 		} catch (e) {
-			if ((e.response || {}).status != 400) throw e;
+			const status = (e.response || {}).status;
+			if ( status != 400 && status != 404) {
+				if (status) {
+					console.log("Unexpected status: " + status);
+				}
+				throw e;
+			}
 			print(`Key not found. Creating key '${keyName}'`);
 			await partitionAdmin.post(`keys/generate`, {
 				keyId: keyName,
 				keyFormat: {
+					// changed to SECP256K1
 					curve: "SECP_256K_1",
 					type: "ECC"
 				}

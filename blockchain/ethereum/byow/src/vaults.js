@@ -167,7 +167,8 @@ async function createVault(options) {
  */
 async function listCoins(options) {
   var activeVault = options.activeVault;
-  return (await superagent.get(`${options.caspMngUrl}/vaults/${activeVault.id}/coins`)).body.coins;
+  var coinsResponse = (await superagent.get(`${options.caspMngUrl}/vaults/${activeVault.id}/coins`)).body;
+  return coins.items || coins.coins || coins;
 }
 
 /**

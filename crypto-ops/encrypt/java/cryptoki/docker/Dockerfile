@@ -35,12 +35,6 @@ RUN  rpm -i /root/data/ekm-client-2.0.2010.38445-el7+el8.x86_64.rpm; \
 
 RUN cp /usr/lib64/ekm-java* ../lib
 
-ARG UKC_SERVER_ADDRESS=ep
-RUN echo "servers=$UKC_SERVER_ADDRESS">/etc/ekm/client.conf
-
-ENV UKC_PARTITION encrypt_demo
-ENV UKC_PASSWORD Unbound1!
-
 RUN chmod +x /root/data/*.sh;
 
 RUN mkdir /root/demo

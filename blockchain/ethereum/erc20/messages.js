@@ -1,5 +1,5 @@
 module.exports = {
-  WELCOME: 'Welcome to the Unbound Tech CASP ERC20 Demo.\n'
+  WELCOME: 'Welcome to the Unbound Security CASP ERC20 Demo.\n'
             + 'This demo guides you through the process of an ERC20 contract deployment and usage.',
 
   BEFORE_COMPILE: (contractName) => `Lets start by compiling our contract: ${contractName}`,

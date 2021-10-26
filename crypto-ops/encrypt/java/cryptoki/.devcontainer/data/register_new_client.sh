@@ -14,7 +14,7 @@ curl "https://$EP_HOST_NAME/api/v1/clients/$CLIENT?partitionId=$PARTITION" \
   -X DELETE -H 'Connection: keep-alive' \
   -H 'Accept: application/json, text/plain, */*' \
   --fail \
-  --user "so@$UKC_PARTITION:$UKC_PASSWORD" --compressed --insecure -output /dev/null --silent || true
+  --user "so@$UKC_PARTITION:$UKC_PASSWORD" --compressed --insecure --output /dev/null --silent || true
 
 echo "Creating client $CLIENT from $UKC_PARTITION"
 ACTIVATION_CODE=$(curl "https://$EP_HOST_NAME/api/v1/clients?partitionId=$PARTITION" \
