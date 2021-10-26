@@ -1,6 +1,6 @@
-# CASP BYOW Ethereum JavaScript Demo
+# CASP BYOW Bitcoin JavaScript Demo
 
-This demo is a terminal application that shows how to use the CASP (Crypto Asset Security Platform) API from an external Ethereum wallet for creating and signing transactions.
+This demo is a terminal application that shows how to use the CASP (Crypto Asset Security Platform) API from an external Bitcoin wallet for creating and signing transactions.
 
 CASP provides the necessary APIs so that you can bring your own wallet (**BYOW**), meaning that you can use whatever ledger you have, and control the vault and key operations with CASP. Using BYOW, you can create an implementation that can handle any coin type, as well as any special operations that you use to communicate with your ledger and for ledger processing.
 
@@ -13,40 +13,46 @@ Connect to CASP and authenticate with bearer token
 - **Accounts and Participants**
 - **Vaults**    
 Create a vault and activate it by joining a participant   
-- **Generating Ethereum address**   
-Use CASP to generate a new ECDSA key-pair and use it to generate a new Ethereum address
+- **Generating Bitcoin address**   
+Use CASP to generate a new ECDSA key-pair and use it to generate a new Bitcoin address
 - **Deposit**   
-Poll an address for balance with web3
+Poll an address for balance with Blockset
 - **Withdrawal**   
-Create an Ethereum transaction to withdraw funds from a CASP generated address
+Create a Bitcoin transaction to withdraw funds from a CASP generated address
 - **Signature**   
-Request a signature approval from vault participants and use the signature to sign the Eth transaction
+Request a signature approval from vault participants and use the signature to sign the Bitcoin transaction
 - **Send transaction to ledger**
 
 ## Usage
 ### Requirements
-* A CASP server
-* An Infura Token (get it from [here](https://infura.io))
+* A running CASP server
+* A Blockset Token (get it from [here](https://blockset.com))
 * Node JS LTS
 
 ### Installation
 * Get the source code
     ```
-    $ git clone https://github.com/unboundsecurity/CASP-BYOW-JS-Demo.git
+    $ git clone git@github.com:unboundsecurity/unbound-sample-code.git
     ```
 * Install dependencies
     ```
-    $ cd CASP-BYOW-JS-Demo
+    $ cd blockchain/bitcoin/byow
     $ npm install
     ```
 * Run the demo
     ```
     $ npm start
     ```
-    During the demo you will be asked to deposit test Ethereum into an address created by CASP.
-    This can be done using one of the online Ethereum ropsten faucets such as this: https://faucet.ropsten.be
+    During the demo you will be asked to deposit test Bitcoin into an address created by CASP.
+    This can be done using one of the online Bitcoin testnet faucets such as this: https://testnet-faucet.mempool.co
 * Show curl commands  
     To show communication to the server as `curl` commands use the following command on Linux based systems
     ```
     $ DEBUG=super-curl npm start
+    ```
+* Reset the demo data 
+    If you want to run the demo again from scratch you need to delete the file ``` data/data.json ```
+    This could be done by running
+    ```
+    npm run reset
     ```

@@ -1,20 +1,17 @@
 var CASP_API_BASE;
 const inquirer = require('inquirer');
 const util = require('./util');
+const vaults = require('./vaults');
+const transactions = require('./transactions');
 const superagent = util.superagent;
 const fs = require('fs');
-const Promise = require('bluebird');
-const qrcode = require('qrcode-terminal');
 const { default: axios } = require('axios');
 
 // Use locally saved data from previous executions.
 // For example, if we already created a vault, use it and don't create again.
 // The current execution data is saved at the end.
 // To reset, dataFile can be deleted before the next execution.
-
-//eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1ZTI2N2QyMi01MTRmLTQ5NzgtYjU5Yy1hM2NhNzMwNjc3MGIiLCJicmQ6Y3QiOiJjbGkiLCJleHAiOjkyMjMzNzIwMzY4NTQ3NzUsImlhdCI6MTU4OTM2ODYyNn0.Tuy0HfU9LYUyyRrdRYgjo1d_bjqOY-ITnvyoY-3PrOYViPAjD1_w_gFih6dmfMWwEEIyRfvpdLieHZMnFziIMQ
 var appData = {};
-
 
 // disable certificate validation to allow self-signed certificates used by CASP
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
@@ -37,13 +34,12 @@ async function test() {
     var activeParticipant = await participants.selectParticipant(appData);
     save({ activeParticipant });
 
+    var activeVault = await vaults.selectActiveVault(appData);
+    save({ activeVault });
+
     switch (appData.demoType) {
       // shows how to list and add coins to BIP44 vaults
       case 'MULTI_COIN':
-        var vaults = require('./vaults');
-        var activeVault = await vaults.selectActiveVault(appData);
-        save({ activeVault });
-
         var addCoin;
         do {
           var coins = await vaults.listCoins(appData);
@@ -54,10 +50,6 @@ async function test() {
 
       // shows how to generate public key
       case 'GEN_PUB_KEY':
-        var vaults = require('./vaults');
-        var activeVault = await vaults.selectActiveVault(appData);
-        save({ activeVault });
-        var transactions = require('./transactions');
         var publicKey = await transactions.getPublicKeyFromCasp(appData);
         util.log(`Public key:`)
         util.log(JSON.stringify(publicKey, undefined, 2));
@@ -66,11 +58,6 @@ async function test() {
 
       // full cycle of deposit, signature and withdrawal for Bitcoin BYOW
       case 'BTCTEST_FULL':
-        var vaults = require('./vaults');
-        var activeVault = await vaults.selectActiveVault(appData);
-        save({ activeVault });
-
-        var transactions = require('./transactions');
         var addressInfo = appData.addressInfo || await transactions.createAddress(appData);
         save({ addressInfo });
 
@@ -159,28 +146,34 @@ async function init() {
     }
   ])).demoType;
   if (demoType === 'BTCTEST_FULL') {
-    
-      let jwtToken = appData.jwtToken || (await inquirer.prompt([{
+    var response;
+    while(!(response && response.status === 200)) {
+      let jwtToken = appData.blocksetJwtToken || (await inquirer.prompt([{
         name: 'token', message: `Blockset JWT token: `,
         validate: util.required('Blockset token')
       }])).token;
       
       try {
         util.showSpinner('Checking blockset health')
-        let net = await axios({
+        response = await axios({
           method: 'get', url: 'https://api.blockset.com/blocks?max_page_size=5&blockchain_id=bitcoin-testnet',
           headers: { Authorization: `Bearer ${jwtToken}` }
         });
         util.hideSpinner();
-        util.log(`Connection Healthy!`);
+        if(response.status === 200) {
+          util.log(`Connection Healthy!`);
+          appData.blocksetJwtToken = jwtToken;
+          save();
+        } else {
+          throw "Connection to Blockset failed: " + response.statusText;
+        }
       } catch (e) {
+         jwtToken = appData.blocksetJwtToken = undefined;
         util.hideSpinner();
-        util.log(`Could not connect, please try again: ${e.message}`);
+        util.log(`Could not connect to Blockset, please check your token and try again: ${e.message}`);
       }
-    
-     appData.jwtToken = jwtToken;
+    }
   }
-  save();
   return appData;
 }
 

@@ -146,7 +146,7 @@ function satoshiToBtc(amount) {
  * @returns The balance of the account
  */
 async function getUnspentOutputs(address, options) {
-  const transactions = (await getTransactions(address, options.jwtToken)).filter(t => t.confirmations >= 0);
+  const transactions = (await getTransactions(address, options.blocksetJwtToken)).filter(t => t.confirmations >= 0);
   const transfers = transactions.map(tr => tr._embedded && tr._embedded.transfers || []).reduce((a, b) => a.concat(b), []);
   const outputs = transfers.filter(t => t.to_address === address);
   const inputs = transfers.filter(t => t.from_address === address);
@@ -174,10 +174,10 @@ async function getUnspentOutputs(address, options) {
 /**
  * 
  * @param {String} address The address of the account
- * @param {String} jwtToken The token used to authenticate blockset requests
+ * @param {String} blocksetJwtToken The token used to authenticate blockset requests
  * @returns The list of of transactions
  */
-async function getTransactions(address, jwtToken) {
+async function getTransactions(address, blocksetJwtToken) {
   const options = [
     { option: 'include_raw', value: 'true' },
     { option: 'address', value: address }
@@ -192,7 +192,7 @@ async function getTransactions(address, jwtToken) {
 
 
   return axios({
-    method: 'get', url: url, headers: { Authorization: `Bearer ${jwtToken}` }
+    method: 'get', url: url, headers: { Authorization: `Bearer ${blocksetJwtToken}` }
   }).then(response => {
     return response.data._embedded ? response.data._embedded.transactions : [];
   }).catch(error => {
@@ -228,7 +228,7 @@ async function createTransaction(options) {
   });
 
   let amount = Number(options.addressInfo.balance);
-  const fee = 1000;//await calculateFee(options.jwtToken);
+  const fee = 1000;//await calculateFee(options.blocksetJwtToken);
 
   amount -= fee;
 
@@ -243,10 +243,10 @@ async function createTransaction(options) {
 }
 
 // This wasn't finished so it should be ignored 
-async function calculateFee(jwtToken) {
+async function calculateFee(blocksetJwtToken) {
 
   let blockchains = (await request(`blockchains`, 'get',
-    [{ option: 'testnet', value: 'true' }], undefined, jwtToken)).data._embedded.blockchains;
+    [{ option: 'testnet', value: 'true' }], undefined, blocksetJwtToken)).data._embedded.blockchains;
 
   let blockchian = blockchains.filter(b => b.name === 'Bitcoin')[0];
 
@@ -402,7 +402,7 @@ async function sendTransaction(options) {
     blockchain_id: 'bitcoin-testnet',
     transaction_id: `bitcoin-testnet:${hash}`
   },
-    options.jwtToken);
+    options.blocksetJwtToken);
 
   util.hideSpinner();
   util.log(`Transaction sent successfully, txHash is: ${postResult.data.hash}`);
@@ -411,7 +411,7 @@ async function sendTransaction(options) {
   return postResult.transactionHash;
 }
 
-async function request(endpoint, method, options, data, clientJwtToken) {
+async function request(endpoint, method, options, data, bearerToken) {
   let url = `https://api.blockset.com/${endpoint}?blockchain_id=bitcoin-testnet`;
   if (options) {
     url = url.concat(options.reduce(
@@ -425,7 +425,7 @@ async function request(endpoint, method, options, data, clientJwtToken) {
     url,
     data,
     headers: {
-      Authorization: `Bearer ${clientJwtToken}`
+      Authorization: `Bearer ${bearerToken}`
     }
   });
 }

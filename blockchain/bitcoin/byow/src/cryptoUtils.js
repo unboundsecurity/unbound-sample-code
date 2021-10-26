@@ -2,12 +2,7 @@ const bitcoinjs = require('bitcoinjs-lib');
 const Transaction = bitcoinjs.Transaction;
 const bscript = bitcoinjs.script;
 const bcrypto = bitcoinjs.crypto;
-const bitcoin = bitcoinjs.networks;
 const opcodes = bitcoinjs.opcodes;
-// import { bitcoin } from 'bitcoinjs-lib/types/networks';
-
-const varuint = require('varuint-bitcoin');
-const bufferutils = require('bitcoinjs-lib/src/bufferutils');
 
 // the below code was copied from https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/src/transaction.js#L254
 // in order to extract the raw transaction before hashing
@@ -97,16 +92,6 @@ function rawTxForHash(transaction,
     raw: buffer,
     hash: bcrypto.hash256(buffer)
   }
-}
-
-const ZERO = Buffer.from(
-    '0000000000000000000000000000000000000000000000000000000000000000',
-    'hex',
-);
-
-function varSliceSize(someScript) {
-  const length = someScript.length;
-  return varuint.encodingLength(length) + length;
 }
 
 const cryptoUtils = { rawTxForHash };
